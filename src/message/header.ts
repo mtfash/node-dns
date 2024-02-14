@@ -64,12 +64,29 @@ type DNSMessageHeader = {
   recursionDesired: boolean;
   recursionAvailable?: boolean;
   responseCode: ResponseCode | undefined;
+  qdcount: number; // Number of entries in the question
+  ancount: number; // Number of resource records in the answer section
+  nscount: number; // Number of name server RRs in the authority records section
+  arcount: number; // number of RRs in the additional records section
 };
 
 export class MessageHeader {
   buffer: Buffer;
 
-  constructor({ id, query, opcode, authoritativeAnswer, truncated, recursionDesired, recursionAvailable, responseCode }: DNSMessageHeader) {
+  constructor({
+    id,
+    query,
+    opcode,
+    authoritativeAnswer,
+    truncated,
+    recursionDesired,
+    recursionAvailable,
+    responseCode,
+    qdcount,
+    ancount,
+    nscount,
+    arcount,
+  }: DNSMessageHeader) {
     this.buffer = Buffer.alloc(12, 0, 'binary');
     this.buffer.writeUInt16BE(id, 0);
     this.buffer.writeUInt16BE(
@@ -82,6 +99,11 @@ export class MessageHeader {
         (typeof responseCode === 'number' ? responseCode : 0),
       2
     );
+
+    this.buffer.writeUInt16BE(qdcount, 4);
+    this.buffer.writeUInt16BE(ancount, 6);
+    this.buffer.writeUInt16BE(nscount, 8);
+    this.buffer.writeUInt16BE(arcount, 10);
   }
 
   toString() {
