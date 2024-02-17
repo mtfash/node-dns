@@ -1,10 +1,8 @@
-import { DataFormatError } from '../error/data-error';
-
 export class Label extends Buffer {
   static encode(label: string): Label {
     const { length } = label;
     if (length > 63) {
-      throw new DataFormatError(`Invalid label length: ${label} (${length})`);
+      throw new Error(`Invalid label length: ${label} (${length})`);
     }
 
     const buffer = Buffer.alloc(length + 1, 0, 'ascii');
