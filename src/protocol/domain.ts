@@ -1,13 +1,9 @@
-import { DataFormatError } from '../error/data-error';
-
 export class Domain {
   private labels: string[];
 
   constructor(domain: string) {
     if (domain.length > 253) {
-      throw new DataFormatError(
-        `Invalid domain length: ${domain} (${domain.length})`
-      );
+      throw new Error(`Invalid domain length: ${domain} (${domain.length})`);
     }
     const labels = domain.split('.');
     labels.forEach((label) => {});

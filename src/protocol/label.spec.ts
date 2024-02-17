@@ -9,7 +9,15 @@ describe('Label::encode()', () => {
     expect(buffer[1]).toBe(0x77);
     expect(buffer[2]).toBe(0x77);
     expect(buffer[3]).toBe(0x77);
-    expect(buffer.length).toBe(4);
+    expect(buffer.byteLength).toBe(4);
+  });
+
+  it('should correctly encode null label', () => {
+    const labelStr = '';
+    const buffer = Label.encode(labelStr);
+
+    expect(buffer[0]).toBe(0);
+    expect(buffer.byteLength).toBe(1);
   });
 });
 
