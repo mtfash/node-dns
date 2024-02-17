@@ -1,23 +1,25 @@
-export class Domain {
-  private labels: string[];
+import { Label } from './label';
 
-  constructor(domain: string) {
+export class Domain {
+  static encode(domain: string): Buffer {
     if (domain.length > 253) {
       throw new Error(`Invalid domain length: ${domain} (${domain.length})`);
     }
+
     const labels = domain.split('.');
-    labels.forEach((label) => {});
+    if (!domain.endsWith('.')) {
+      labels.push('');
+    }
 
-    this.labels = labels;
-  }
+    const domainBuf = Buffer.alloc(domain.length + 2, 0, 'ascii');
 
-  encode(): Uint8Array {
-    const arr = new Uint8Array(
-      (function* () {
-        yield* [1, 2, 3];
-      })()
-    );
+    let index = 0;
+    labels.forEach((label) => {
+      const labelBuf = Label.encode(label);
+      domainBuf.set(labelBuf, index);
+      index += labelBuf.length;
+    });
 
-    return arr;
+    return domainBuf;
   }
 }
