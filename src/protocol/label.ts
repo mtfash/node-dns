@@ -1,5 +1,5 @@
-export class Label extends Buffer {
-  static encode(label: string): Label {
+export class Label {
+  static encode(label: string): Buffer {
     const { length } = label;
     if (length > 63) {
       throw new Error(`Invalid label length: ${label} (${length})`);
@@ -10,23 +10,20 @@ export class Label extends Buffer {
     buffer.writeUint8(length, 0);
     buffer.set(Buffer.from(label, 'ascii'), 1);
 
-    return Label.from(buffer);
+    return Buffer.from(buffer);
   }
 
   static decode(array: Uint8Array): string {
-    const length = array[0];
-    const label = array.slice(1);
+    if (typeof array[0] === 'undefined') {
+      throw new Error('Invalid label array input: length octet is undefined');
+    }
 
-    if (label.length !== length) {
+    if (array.length !== array[0] + 1) {
       throw new Error(
         `Invalid label array input: length octet does not match label's length`
       );
     }
 
-    return new TextDecoder().decode(label);
-  }
-
-  toString() {
-    return this.subarray(1).toString();
+    return Buffer.from(array.slice(1)).toString('ascii');
   }
 }
