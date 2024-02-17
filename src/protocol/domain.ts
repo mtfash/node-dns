@@ -7,11 +7,15 @@ export class Domain {
     }
 
     const labels = domain.split('.');
-    if (!domain.endsWith('.')) {
+
+    const hasLastDot = domain.endsWith('.');
+
+    if (!hasLastDot) {
       labels.push('');
     }
 
-    const domainBuf = Buffer.alloc(domain.length + 2, 0, 'ascii');
+    const extraLength = hasLastDot ? 1 : 2;
+    const domainBuf = Buffer.alloc(domain.length + extraLength, 0, 'ascii');
 
     let index = 0;
     labels.forEach((label) => {

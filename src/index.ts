@@ -1,7 +1,5 @@
-import { Label } from './protocol/label';
+import { Domain } from './protocol/domain';
 
-const label = Label.encode('www');
+const encodedDomain = Domain.encode('www.microsoft.com');
 
-console.log(Label.decode(label));
-console.log(label);
-console.log(label.toString());
+console.log(encodedDomain);
