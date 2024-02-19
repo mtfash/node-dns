@@ -59,21 +59,19 @@ type DNSMessageHeader = {
   id: number;
   query: Query;
   opcode: Opcode;
-  authoritativeAnswer: boolean | undefined;
+  authoritativeAnswer?: boolean;
   truncated: boolean;
   recursionDesired: boolean;
   recursionAvailable?: boolean;
-  responseCode: ResponseCode | undefined;
-  qdcount: number; // Number of entries in the question
-  ancount: number; // Number of resource records in the answer section
-  nscount: number; // Number of name server RRs in the authority records section
-  arcount: number; // number of RRs in the additional records section
+  responseCode?: ResponseCode | undefined;
+  qdcount?: number; // Number of entries in the question
+  ancount?: number; // Number of resource records in the answer section
+  nscount?: number; // Number of name server RRs in the authority records section
+  arcount?: number; // number of RRs in the additional records section
 };
 
 export class MessageHeader {
-  buffer: Buffer;
-
-  constructor({
+  static encode({
     id,
     query,
     opcode,
@@ -87,9 +85,9 @@ export class MessageHeader {
     nscount,
     arcount,
   }: DNSMessageHeader) {
-    this.buffer = Buffer.alloc(12, 0, 'binary');
-    this.buffer.writeUInt16BE(id, 0);
-    this.buffer.writeUInt16BE(
+    const buffer = Buffer.alloc(12, 0, 'ascii');
+    buffer.writeUInt16BE(id, 0);
+    buffer.writeUInt16BE(
       query |
         opcode |
         (authoritativeAnswer ? AA : 0) |
@@ -100,22 +98,11 @@ export class MessageHeader {
       2
     );
 
-    this.buffer.writeUInt16BE(qdcount, 4);
-    this.buffer.writeUInt16BE(ancount, 6);
-    this.buffer.writeUInt16BE(nscount, 8);
-    this.buffer.writeUInt16BE(arcount, 10);
-  }
+    if (qdcount) buffer.writeUInt16BE(qdcount, 4);
+    if (ancount) buffer.writeUInt16BE(ancount, 6);
+    if (nscount) buffer.writeUInt16BE(nscount, 8);
+    if (arcount) buffer.writeUInt16BE(arcount, 10);
 
-  toString() {
-    const bytes: string[] = [];
-    for (let i = 0; i < 12; i += 2) {
-      const b1 = this.buffer.readUInt8(i).toString(2).padStart(8, '0');
-      const b2 = this.buffer
-        .readUInt8(i + 1)
-        .toString(2)
-        .padStart(8, '0');
-      bytes.push(`${b1} ${b2}`);
-    }
-    return `${bytes.join('\n')}`;
+    return buffer;
   }
 }

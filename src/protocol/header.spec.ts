@@ -1,29 +1,21 @@
-import { MessageHeader, Opcode, Query, ResponseCode } from './header';
+import { MessageHeader, Opcode, Query } from './header';
 
 describe('MessageHeader', () => {
   it('should encode the header to correct binary data', () => {
-    const header = new MessageHeader({
-      id: 5,
-      query: Query.RESPONSE,
-      authoritativeAnswer: true,
-      opcode: Opcode.IQUERY,
+    const header = MessageHeader.encode({
+      id: 0xc212,
+      query: Query.QUERY,
+      opcode: Opcode.QUERY,
+      authoritativeAnswer: false,
       recursionDesired: true,
-      responseCode: ResponseCode.Refused,
       truncated: false,
-      recursionAvailable: true,
       qdcount: 1,
-      ancount: 2,
-      nscount: 3,
-      arcount: 4,
     });
 
-    const strRepr = `00000000 00000101
-10001101 10000101
-00000000 00000001
-00000000 00000010
-00000000 00000011
-00000000 00000100`;
+    const expected = Buffer.from([
+      0xc2, 0x12, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ]);
 
-    expect(header.toString()).toBe(strRepr);
+    expect(expected).toEqual(header);
   });
 });
