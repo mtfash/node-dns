@@ -18,6 +18,7 @@ export class Domain {
     const domainBuf = Buffer.alloc(domain.length + extraLength, 0, 'ascii');
 
     let index = 0;
+
     labels.forEach((label) => {
       const labelBuf = Label.encode(label);
       domainBuf.set(labelBuf, index);
@@ -25,5 +26,22 @@ export class Domain {
     });
 
     return domainBuf;
+  }
+
+  static decode(domainArray: Uint8Array): string {
+    let labels: string[] = [];
+
+    let index = 0;
+    let length = domainArray[index];
+    while (length && length !== 0) {
+      const offset = index + length + 1;
+
+      labels.push(Label.decode(domainArray.slice(index, offset)));
+
+      index += length + 1;
+      length = domainArray[index];
+    }
+
+    return labels.join('.');
   }
 }
