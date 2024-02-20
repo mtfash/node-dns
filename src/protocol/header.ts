@@ -16,17 +16,17 @@
  * +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
  */
 
-const QRY_RESPONSE = 0b00000000000000001000000000000000;
-const QRY_QUERY = 0;
+export const QRY_RESPONSE = 0b00000000000000001000000000000000;
+export const QRY_QUERY = 0;
 
 export enum Query {
   QUERY = QRY_QUERY,
   RESPONSE = QRY_RESPONSE,
 }
 
-const OPCODE_QUERY = 0;
-const OPCODE_IQUERY = 0b00000000000000000000100000000000;
-const OPCODE_STATUS = 0b00000000000000000001000000000000;
+export const OPCODE_QUERY = 0;
+export const OPCODE_IQUERY = 0b00000000000000000000100000000000;
+export const OPCODE_STATUS = 0b00000000000000000001000000000000;
 
 export enum Opcode {
   QUERY = OPCODE_QUERY,
@@ -34,17 +34,17 @@ export enum Opcode {
   STATUS = OPCODE_STATUS,
 }
 
-const AA = 0b00000000000000000000010000000000; // Authoritative answer
-const TC = 0b00000000000000000000001000000000; // Truncated
-const RD = 0b00000000000000000000000100000000; // Recursion desired
-const RA = 0b00000000000000000000000010000000; // Recursion available
+export const AA = 0b00000000000000000000010000000000; // Authoritative answer
+export const TC = 0b00000000000000000000001000000000; // Truncated
+export const RD = 0b00000000000000000000000100000000; // Recursion desired
+export const RA = 0b00000000000000000000000010000000; // Recursion available
 
-const RCODE_0 = 0;
-const RCODE_1 = 0b00000000000000000000000000000001;
-const RCODE_2 = 0b00000000000000000000000000000010;
-const RCODE_3 = 0b00000000000000000000000000000011;
-const RCODE_4 = 0b00000000000000000000000000000100;
-const RCODE_5 = 0b00000000000000000000000000000101;
+export const RCODE_0 = 0;
+export const RCODE_1 = 0b00000000000000000000000000000001;
+export const RCODE_2 = 0b00000000000000000000000000000010;
+export const RCODE_3 = 0b00000000000000000000000000000011;
+export const RCODE_4 = 0b00000000000000000000000000000100;
+export const RCODE_5 = 0b00000000000000000000000000000101;
 
 export enum ResponseCode {
   NoError = RCODE_0,
@@ -60,8 +60,8 @@ type DNSMessageHeader = {
   query: Query;
   opcode: Opcode;
   authoritativeAnswer?: boolean;
-  truncated: boolean;
-  recursionDesired: boolean;
+  truncated?: boolean;
+  recursionDesired?: boolean;
   recursionAvailable?: boolean;
   responseCode?: ResponseCode | undefined;
   qdcount?: number; // Number of entries in the question
