@@ -128,6 +128,7 @@ export class MessageHeader {
 
     let rc: ResponseCode = ResponseCode.NoError;
     if ((num32Bits ^ RCODE_MASK) === RCODE_MASK) {
+      rc = ResponseCode.NoError;
     } else if ((num32Bits & RCODE_1) === RCODE_1) {
       rc = ResponseCode.FormatError;
     } else if ((num32Bits & RCODE_2) === RCODE_2) {
