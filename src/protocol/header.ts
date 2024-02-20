@@ -27,6 +27,7 @@ export enum Query {
 export const OPCODE_QUERY = 0;
 export const OPCODE_IQUERY = 0b00000000000000000000100000000000;
 export const OPCODE_STATUS = 0b00000000000000000001000000000000;
+export const OPCODE_MASK = 0b00000000000000000111100000000000;
 
 export enum Opcode {
   QUERY = OPCODE_QUERY,
@@ -45,6 +46,7 @@ export const RCODE_2 = 0b00000000000000000000000000000010;
 export const RCODE_3 = 0b00000000000000000000000000000011;
 export const RCODE_4 = 0b00000000000000000000000000000100;
 export const RCODE_5 = 0b00000000000000000000000000000101;
+export const RCODE_MASK = 0b00000000000000000000000000001111;
 
 export enum ResponseCode {
   NoError = RCODE_0,
@@ -104,5 +106,53 @@ export class MessageHeader {
     if (arcount) buffer.writeUInt16BE(arcount, 10);
 
     return buffer;
+  }
+
+  static decode(header: Buffer): DNSMessageHeader {
+    if (header.byteLength !== 12) {
+      throw new Error(
+        `Invalid header length: ${header} (${header.byteLength} bytes)`
+      );
+    }
+
+    const num32Bits = header.readUInt32BE();
+
+    let opcode: Opcode = Opcode.QUERY;
+    if ((num32Bits & Opcode.IQUERY) === Opcode.IQUERY) {
+      opcode = Opcode.IQUERY;
+    } else if ((num32Bits & Opcode.STATUS) === Opcode.STATUS) {
+      opcode = Opcode.STATUS;
+    } else if ((num32Bits ^ OPCODE_MASK) === OPCODE_MASK) {
+      opcode = Opcode.QUERY;
+    }
+
+    let rc: ResponseCode = ResponseCode.NoError;
+    if ((num32Bits ^ RCODE_MASK) === RCODE_MASK) {
+    } else if ((num32Bits & RCODE_1) === RCODE_1) {
+      rc = ResponseCode.FormatError;
+    } else if ((num32Bits & RCODE_2) === RCODE_2) {
+      rc = ResponseCode.ServerFailure;
+    } else if ((num32Bits & RCODE_3) === RCODE_3) {
+      rc = ResponseCode.NameError;
+    } else if ((num32Bits & RCODE_4) === RCODE_4) {
+      rc = ResponseCode.NotImplemented;
+    } else if ((num32Bits & RCODE_5) === RCODE_5) {
+      rc = ResponseCode.Refused;
+    }
+
+    return {
+      id: header.readUInt16BE(0),
+      query: num32Bits & QRY_RESPONSE,
+      opcode: opcode,
+      authoritativeAnswer: !!(num32Bits & AA),
+      truncated: !!(num32Bits & TC),
+      recursionDesired: !!(num32Bits & RD),
+      recursionAvailable: !!(num32Bits & RA),
+      responseCode: rc,
+      qdcount: header.readUint16BE(4),
+      ancount: header.readUint16BE(6),
+      nscount: header.readUint16BE(8),
+      arcount: header.readUint16BE(10),
+    };
   }
 }

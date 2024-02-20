@@ -84,4 +84,25 @@ describe('MessageHeader', () => {
       expect(responseHeader.readUInt16BE(10)).toBe(1);
     });
   });
+
+  describe('MessageHeader::decode()', () => {
+    const buffer = Buffer.from([
+      0x24, 0xfc, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ]);
+
+    const headerDecoded = MessageHeader.decode(buffer);
+    expect(headerDecoded).toBeDefined();
+    expect(headerDecoded.id).toBe(0x24fc);
+    expect(headerDecoded.query).toBe(Query.QUERY);
+    expect(headerDecoded.opcode).toBe(Opcode.QUERY);
+    expect(headerDecoded.truncated).toBe(false);
+    expect(headerDecoded.recursionDesired).toBeTruthy();
+    expect(headerDecoded.recursionAvailable).toBeFalsy();
+    expect(headerDecoded.authoritativeAnswer).toBeFalsy();
+    expect(headerDecoded.responseCode).toBe(0);
+    expect(headerDecoded.qdcount).toBe(1);
+    expect(headerDecoded.ancount).toBe(0);
+    expect(headerDecoded.nscount).toBe(0);
+    expect(headerDecoded.arcount).toBe(0);
+  });
 });
