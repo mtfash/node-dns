@@ -10,7 +10,7 @@ export class Label {
     buffer.writeUint8(length, 0);
     buffer.set(Buffer.from(label, 'ascii'), 1);
 
-    return Buffer.from(buffer);
+    return buffer;
   }
 
   static decode(array: Uint8Array): string {
