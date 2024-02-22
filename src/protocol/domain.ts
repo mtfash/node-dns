@@ -1,4 +1,4 @@
-import { Label } from './label';
+import { decodeLabel, encodeLabel } from './label';
 
 export function encodeDomain(domain: string): Buffer {
   if (domain.length > 253) {
@@ -19,7 +19,7 @@ export function encodeDomain(domain: string): Buffer {
   let index = 0;
 
   labels.forEach((label) => {
-    const labelBuf = Label.encode(label);
+    const labelBuf = encodeLabel(label);
     domainBuf.set(labelBuf, index);
     index += labelBuf.length;
   });
@@ -35,7 +35,7 @@ export function decodeDomain(domain: Uint8Array): string {
   while (length && length !== 0) {
     const offset = index + length + 1;
 
-    labels.push(Label.decode(domain.slice(index, offset)));
+    labels.push(decodeLabel(domain.slice(index, offset)));
 
     index += length + 1;
     length = domain[index];
