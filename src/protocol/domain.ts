@@ -32,6 +32,7 @@ export function decodeDomain(domain: Uint8Array): string {
 
   let index = 0;
   let length = domain[index];
+
   while (length && length !== 0) {
     const offset = index + length + 1;
 
@@ -42,4 +43,31 @@ export function decodeDomain(domain: Uint8Array): string {
   }
 
   return labels.join('.');
+}
+
+export function decodeDomainFrom(
+  buffer: Uint8Array,
+  offset = 0
+): {
+  domain: string;
+  endOffset: number;
+} {
+  let labels: string[] = [];
+
+  let index = offset;
+  let length = buffer[index];
+
+  while (length && length !== 0) {
+    const offset = index + length + 1;
+
+    labels.push(decodeLabel(buffer.slice(index, offset)));
+
+    index += length + 1;
+    length = buffer[index];
+  }
+
+  return {
+    domain: labels.join('.'),
+    endOffset: index,
+  };
 }

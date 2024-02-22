@@ -3,7 +3,7 @@ import { Opcode, Query, decodeHeader, encodeHeader } from './header';
 describe('MessageHeader', () => {
   describe('encodeHeader()', () => {
     it('should correctly encode id field', () => {
-    const queryHeader = encodeHeader({
+      const queryHeader = encodeHeader({
         id: 0xc212,
         query: Query.QUERY,
         opcode: Opcode.QUERY,
@@ -86,23 +86,25 @@ describe('MessageHeader', () => {
   });
 
   describe('decodeHeader()', () => {
-    const buffer = Buffer.from([
-      0x24, 0xfc, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    ]);
+    it('should correctly decode message header', () => {
+      const buffer = Buffer.from([
+        0x24, 0xfc, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      ]);
 
-    const headerDecoded = decodeHeader(buffer);
-    expect(headerDecoded).toBeDefined();
-    expect(headerDecoded.id).toBe(0x24fc);
-    expect(headerDecoded.query).toBe(Query.QUERY);
-    expect(headerDecoded.opcode).toBe(Opcode.QUERY);
-    expect(headerDecoded.truncated).toBe(false);
-    expect(headerDecoded.recursionDesired).toBeTruthy();
-    expect(headerDecoded.recursionAvailable).toBeFalsy();
-    expect(headerDecoded.authoritativeAnswer).toBeFalsy();
-    expect(headerDecoded.responseCode).toBe(0);
-    expect(headerDecoded.qdcount).toBe(1);
-    expect(headerDecoded.ancount).toBe(0);
-    expect(headerDecoded.nscount).toBe(0);
-    expect(headerDecoded.arcount).toBe(0);
+      const headerDecoded = decodeHeader(buffer);
+      expect(headerDecoded).toBeDefined();
+      expect(headerDecoded.id).toBe(0x24fc);
+      expect(headerDecoded.query).toBe(Query.QUERY);
+      expect(headerDecoded.opcode).toBe(Opcode.QUERY);
+      expect(headerDecoded.truncated).toBe(false);
+      expect(headerDecoded.recursionDesired).toBeTruthy();
+      expect(headerDecoded.recursionAvailable).toBeFalsy();
+      expect(headerDecoded.authoritativeAnswer).toBeFalsy();
+      expect(headerDecoded.responseCode).toBe(0);
+      expect(headerDecoded.qdcount).toBe(1);
+      expect(headerDecoded.ancount).toBe(0);
+      expect(headerDecoded.nscount).toBe(0);
+      expect(headerDecoded.arcount).toBe(0);
+    });
   });
 });
