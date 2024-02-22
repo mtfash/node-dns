@@ -1,10 +1,10 @@
-import { Domain } from './domain';
+import { decodeDomain, encodeDomain } from './domain';
 
 describe('Domain', () => {
-  describe('Domain::encode', () => {
+  describe('encodeDomain', () => {
     it('should correctly encode a domain name to an array of octets', () => {
       const domain = 'www.microsoft.com';
-      const buffer = Domain.encode(domain);
+      const buffer = encodeDomain(domain);
 
       expect(buffer.byteLength).toBe(19);
       expect(buffer[0]).toBe(3);
@@ -14,7 +14,7 @@ describe('Domain', () => {
 
     it('should correctly encode domain name strings with last dot to an array of octets', () => {
       const domain = 'www.microsoft.com.';
-      const buffer = Domain.encode(domain);
+      const buffer = encodeDomain(domain);
 
       expect(buffer.byteLength).toBe(19);
       expect(buffer[0]).toBe(3);
@@ -23,14 +23,14 @@ describe('Domain', () => {
     });
   });
 
-  describe('Domain::decode', () => {
+  describe('decodeDomain', () => {
     it('should correctly decode a domain buffer to its string representation', () => {
       const buffer = new Uint8Array([
         0x03, 0x77, 0x77, 0x77, 0x09, 0x6d, 0x69, 0x63, 0x72, 0x6f, 0x73, 0x6f,
         0x66, 0x74, 0x03, 0x63, 0x6f, 0x6d, 0x00,
       ]);
 
-      const domain = Domain.decode(buffer);
+      const domain = decodeDomain(buffer);
 
       expect(domain).toBe('www.microsoft.com');
     });

@@ -1,6 +1,6 @@
 import { QCLASS } from '../values/qclass';
 import { QTYPE } from '../values/qtype';
-import { Domain } from './domain';
+import { encodeDomain } from './domain';
 
 export type Question = {
   qname: string;
@@ -9,7 +9,7 @@ export type Question = {
 };
 
 export function encodeQuestion({ qname, qtype, qclass }: Question): Buffer {
-  const qnameBuff = Domain.encode(qname);
+  const qnameBuff = encodeDomain(qname);
   const buff = Buffer.alloc(qnameBuff.byteLength + 4);
   buff.set(qnameBuff, 0);
   buff.writeUint16BE(qtype, qnameBuff.length);
