@@ -72,88 +72,86 @@ type DNSMessageHeader = {
   arcount?: number; // number of RRs in the additional records section
 };
 
-export class MessageHeader {
-  static encode({
-    id,
-    query,
-    opcode,
-    authoritativeAnswer,
-    truncated,
-    recursionDesired,
-    recursionAvailable,
-    responseCode,
-    qdcount,
-    ancount,
-    nscount,
-    arcount,
-  }: DNSMessageHeader) {
-    const buffer = Buffer.alloc(12, 0, 'ascii');
-    buffer.writeUInt16BE(id, 0);
-    buffer.writeUInt16BE(
-      query |
-        opcode |
-        (authoritativeAnswer ? AA : 0) |
-        (truncated ? TC : 0) |
-        (recursionDesired ? RD : 0) |
-        (recursionAvailable ? RA : 0) |
-        (typeof responseCode === 'number' ? responseCode : 0),
-      2
+export function encodeHeader({
+  id,
+  query,
+  opcode,
+  authoritativeAnswer,
+  truncated,
+  recursionDesired,
+  recursionAvailable,
+  responseCode,
+  qdcount,
+  ancount,
+  nscount,
+  arcount,
+}: DNSMessageHeader) {
+  const buffer = Buffer.alloc(12, 0, 'ascii');
+  buffer.writeUInt16BE(id, 0);
+  buffer.writeUInt16BE(
+    query |
+      opcode |
+      (authoritativeAnswer ? AA : 0) |
+      (truncated ? TC : 0) |
+      (recursionDesired ? RD : 0) |
+      (recursionAvailable ? RA : 0) |
+      (typeof responseCode === 'number' ? responseCode : 0),
+    2
+  );
+
+  if (qdcount) buffer.writeUInt16BE(qdcount, 4);
+  if (ancount) buffer.writeUInt16BE(ancount, 6);
+  if (nscount) buffer.writeUInt16BE(nscount, 8);
+  if (arcount) buffer.writeUInt16BE(arcount, 10);
+
+  return buffer;
+}
+
+export function decodeHeader(header: Buffer): DNSMessageHeader {
+  if (header.byteLength !== 12) {
+    throw new Error(
+      `Invalid header length: ${header} (${header.byteLength} bytes)`
     );
-
-    if (qdcount) buffer.writeUInt16BE(qdcount, 4);
-    if (ancount) buffer.writeUInt16BE(ancount, 6);
-    if (nscount) buffer.writeUInt16BE(nscount, 8);
-    if (arcount) buffer.writeUInt16BE(arcount, 10);
-
-    return buffer;
   }
 
-  static decode(header: Buffer): DNSMessageHeader {
-    if (header.byteLength !== 12) {
-      throw new Error(
-        `Invalid header length: ${header} (${header.byteLength} bytes)`
-      );
-    }
+  const num32Bits = header.readUInt32BE();
 
-    const num32Bits = header.readUInt32BE();
-
-    let opcode: Opcode = Opcode.QUERY;
-    if ((num32Bits & Opcode.IQUERY) === Opcode.IQUERY) {
-      opcode = Opcode.IQUERY;
-    } else if ((num32Bits & Opcode.STATUS) === Opcode.STATUS) {
-      opcode = Opcode.STATUS;
-    } else if ((num32Bits ^ OPCODE_MASK) === OPCODE_MASK) {
-      opcode = Opcode.QUERY;
-    }
-
-    let rc: ResponseCode = ResponseCode.NoError;
-    if ((num32Bits ^ RCODE_MASK) === RCODE_MASK) {
-      rc = ResponseCode.NoError;
-    } else if ((num32Bits & RCODE_1) === RCODE_1) {
-      rc = ResponseCode.FormatError;
-    } else if ((num32Bits & RCODE_2) === RCODE_2) {
-      rc = ResponseCode.ServerFailure;
-    } else if ((num32Bits & RCODE_3) === RCODE_3) {
-      rc = ResponseCode.NameError;
-    } else if ((num32Bits & RCODE_4) === RCODE_4) {
-      rc = ResponseCode.NotImplemented;
-    } else if ((num32Bits & RCODE_5) === RCODE_5) {
-      rc = ResponseCode.Refused;
-    }
-
-    return {
-      id: header.readUInt16BE(0),
-      query: num32Bits & QRY_RESPONSE,
-      opcode: opcode,
-      authoritativeAnswer: !!(num32Bits & AA),
-      truncated: !!(num32Bits & TC),
-      recursionDesired: !!(num32Bits & RD),
-      recursionAvailable: !!(num32Bits & RA),
-      responseCode: rc,
-      qdcount: header.readUint16BE(4),
-      ancount: header.readUint16BE(6),
-      nscount: header.readUint16BE(8),
-      arcount: header.readUint16BE(10),
-    };
+  let opcode: Opcode = Opcode.QUERY;
+  if ((num32Bits & Opcode.IQUERY) === Opcode.IQUERY) {
+    opcode = Opcode.IQUERY;
+  } else if ((num32Bits & Opcode.STATUS) === Opcode.STATUS) {
+    opcode = Opcode.STATUS;
+  } else if ((num32Bits ^ OPCODE_MASK) === OPCODE_MASK) {
+    opcode = Opcode.QUERY;
   }
+
+  let rc: ResponseCode = ResponseCode.NoError;
+  if ((num32Bits ^ RCODE_MASK) === RCODE_MASK) {
+    rc = ResponseCode.NoError;
+  } else if ((num32Bits & RCODE_1) === RCODE_1) {
+    rc = ResponseCode.FormatError;
+  } else if ((num32Bits & RCODE_2) === RCODE_2) {
+    rc = ResponseCode.ServerFailure;
+  } else if ((num32Bits & RCODE_3) === RCODE_3) {
+    rc = ResponseCode.NameError;
+  } else if ((num32Bits & RCODE_4) === RCODE_4) {
+    rc = ResponseCode.NotImplemented;
+  } else if ((num32Bits & RCODE_5) === RCODE_5) {
+    rc = ResponseCode.Refused;
+  }
+
+  return {
+    id: header.readUInt16BE(0),
+    query: num32Bits & QRY_RESPONSE,
+    opcode: opcode,
+    authoritativeAnswer: !!(num32Bits & AA),
+    truncated: !!(num32Bits & TC),
+    recursionDesired: !!(num32Bits & RD),
+    recursionAvailable: !!(num32Bits & RA),
+    responseCode: rc,
+    qdcount: header.readUint16BE(4),
+    ancount: header.readUint16BE(6),
+    nscount: header.readUint16BE(8),
+    arcount: header.readUint16BE(10),
+  };
 }

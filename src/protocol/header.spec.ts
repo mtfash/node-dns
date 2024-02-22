@@ -1,9 +1,9 @@
-import { MessageHeader, Opcode, Query } from './header';
+import { Opcode, Query, decodeHeader, encodeHeader } from './header';
 
 describe('MessageHeader', () => {
-  describe('MessageHeader::encode()', () => {
+  describe('encodeHeader()', () => {
     it('should correctly encode id field', () => {
-      const queryHeader = MessageHeader.encode({
+    const queryHeader = encodeHeader({
         id: 0xc212,
         query: Query.QUERY,
         opcode: Opcode.QUERY,
@@ -15,7 +15,7 @@ describe('MessageHeader', () => {
 
     it('should correctly encode QR bit', () => {
       [Query.QUERY, Query.RESPONSE].forEach((query) => {
-        const header = MessageHeader.encode({
+        const header = encodeHeader({
           id: 0xc212,
           query: query,
           opcode: Opcode.QUERY,
@@ -27,7 +27,7 @@ describe('MessageHeader', () => {
 
     it('should correctly encode opcode field', () => {
       [Opcode.QUERY, Opcode.IQUERY, Opcode.STATUS].forEach((opcode) => {
-        const header = MessageHeader.encode({
+        const header = encodeHeader({
           id: 0xc212,
           query: Query.RESPONSE,
           opcode: opcode,
@@ -38,7 +38,7 @@ describe('MessageHeader', () => {
     });
 
     it('should encode the header to correct binary data I', () => {
-      const queryHeader = MessageHeader.encode({
+      const queryHeader = encodeHeader({
         id: 0xc212,
         query: Query.QUERY,
         opcode: Opcode.QUERY,
@@ -54,7 +54,7 @@ describe('MessageHeader', () => {
     });
 
     it('should encode the header to correct binary data II', () => {
-      const responseHeader = MessageHeader.encode({
+      const responseHeader = encodeHeader({
         id: 0xfcdb,
         query: Query.RESPONSE,
         opcode: Opcode.QUERY,
@@ -72,7 +72,7 @@ describe('MessageHeader', () => {
     });
 
     it('should correctly encode ARCOUNT field', () => {
-      const responseHeader = MessageHeader.encode({
+      const responseHeader = encodeHeader({
         id: 0xfcdb,
         query: Query.RESPONSE,
         opcode: Opcode.QUERY,
@@ -85,12 +85,12 @@ describe('MessageHeader', () => {
     });
   });
 
-  describe('MessageHeader::decode()', () => {
+  describe('decodeHeader()', () => {
     const buffer = Buffer.from([
       0x24, 0xfc, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     ]);
 
-    const headerDecoded = MessageHeader.decode(buffer);
+    const headerDecoded = decodeHeader(buffer);
     expect(headerDecoded).toBeDefined();
     expect(headerDecoded.id).toBe(0x24fc);
     expect(headerDecoded.query).toBe(Query.QUERY);
