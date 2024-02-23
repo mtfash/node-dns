@@ -1,30 +1,38 @@
 import { decodeLabel, encodeLabel } from './label';
 
 export function encodeDomain(domain: string): Buffer {
-  if (domain.length > 253) {
-    throw new Error(`Invalid domain length: ${domain} (${domain.length})`);
+  const { length } = domain;
+  if (length > 253) {
+    throw new Error(`Invalid domain length: ${domain} (${length})`);
   }
 
+  const buff = Buffer.alloc(length + 2, 0, 'ascii');
+
+  const endOffset = encodeDomainInto(domain, buff);
+
+  return buff.subarray(0, endOffset);
+}
+
+export function encodeDomainInto(
+  domain: string,
+  buffer: Buffer,
+  offset = 0
+): number {
   const labels = domain.split('.');
 
-  const hasLastDot = domain.endsWith('.');
-
-  if (!hasLastDot) {
+  if (!domain.endsWith('.')) {
     labels.push('');
   }
 
-  const extraLength = hasLastDot ? 1 : 2;
-  const domainBuf = Buffer.alloc(domain.length + extraLength, 0, 'ascii');
-
-  let index = 0;
+  let index = offset;
 
   labels.forEach((label) => {
     const labelBuf = encodeLabel(label);
-    domainBuf.set(labelBuf, index);
+    buffer.set(labelBuf, index);
     index += labelBuf.length;
   });
 
-  return domainBuf;
+  return index - offset;
 }
 
 export function decodeDomain(domain: Uint8Array): string {

@@ -1,3 +1,4 @@
+import { encodeDomainInto } from './protocol/domain';
 import { decodeQuestion, encodeQuestion } from './protocol/question';
 import { QCLASS } from './values/qclass';
 import { QTYPE } from './values/qtype';
@@ -20,3 +21,14 @@ const questionBuff = Buffer.from([
 const questionDecoded = decodeQuestion(questionBuff);
 
 console.log(JSON.stringify(questionDecoded, null, 2));
+
+const buff = Buffer.alloc(40, 1);
+const offset = 5;
+
+const abcLength = encodeDomainInto('www.abc.com.', buff, offset);
+
+console.log(buff, abcLength);
+
+const localhostLength = encodeDomainInto('localhost', buff, abcLength + offset);
+
+console.log(buff, localhostLength);
