@@ -1,5 +1,7 @@
 import { encodeDomainInto } from './protocol/domain';
 import { decodeQuestion, encodeQuestion } from './protocol/question';
+import { encodeRR } from './protocol/resource-record';
+import { CLASS } from './values/class';
 import { QCLASS } from './values/qclass';
 import { QTYPE } from './values/qtype';
 
@@ -32,3 +34,12 @@ console.log(buff, abcLength);
 const localhostLength = encodeDomainInto('localhost', buff, abcLength + offset);
 
 console.log(buff, localhostLength);
+
+const rr = encodeRR({
+  name: 'ab.chatgpt.com',
+  type: QTYPE.AAAA,
+  cls: CLASS.IN,
+  ttl: 67,
+  rdlength: 16,
+  rdata: '2606:4700:4400::ac40:9b8d',
+});

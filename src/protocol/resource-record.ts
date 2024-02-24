@@ -1,9 +1,10 @@
 import { CLASS } from '../values/class';
-import { TYPE } from '../values/type';
+import { QTYPE } from '../values/qtype';
+import { encodeDomainInto } from './domain';
 
 export type ResourceRecord = {
   name: string;
-  type: TYPE;
+  type: QTYPE;
   cls: CLASS;
   ttl: number;
   rdlength: number;
@@ -29,7 +30,13 @@ export function encodeRR({
 
   const buff = Buffer.alloc(length);
 
-  
+  const domainLength = encodeDomainInto(name, buff);
+  buff.writeUint16BE(type, domainLength);
+  buff.writeUint16BE(cls, domainLength + 2);
+  buff.writeUint32BE(ttl, domainLength + 4);
+  buff.writeUint16BE(rdlength, domainLength + 8);
+
+  // write rdata field
 
   return buff;
 }
