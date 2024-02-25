@@ -60,6 +60,10 @@ export class DNSMessageBuilder {
   }
 
   setQDCount(count: number): DNSMessageBuilder {
+    if (count < 0 || count > maxUInt16) {
+      throw new Error('qdcount value out of range');
+    }
+
     this.qdcount = count;
     return this;
   }
