@@ -1,8 +1,7 @@
+import { maxUInt16 } from './constants';
 import { DNSMessage } from './dns-message';
 import { Opcode, ResponseCode } from './header';
 import { Question } from './question';
-
-const maxUInt16 = Math.pow(2, 16) - 1;
 
 export class DNSMessageBuilder {
   private id = 0;
@@ -69,16 +68,28 @@ export class DNSMessageBuilder {
   }
 
   setANCount(count: number): DNSMessageBuilder {
+    if (count < 0 || count > maxUInt16) {
+      throw new Error('ancount value out of range');
+    }
+
     this.ancount = count;
     return this;
   }
 
   setNSCount(count: number): DNSMessageBuilder {
+    if (count < 0 || count > maxUInt16) {
+      throw new Error('nscount value out of range');
+    }
+
     this.nscount = count;
     return this;
   }
 
   setARCount(count: number): DNSMessageBuilder {
+    if (count < 0 || count > maxUInt16) {
+      throw new Error('arcount value out of range');
+    }
+
     this.arcount = count;
     return this;
   }

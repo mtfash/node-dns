@@ -1,3 +1,4 @@
+import { maxUInt16 } from './constants';
 import { DNSMessageBuilder } from './dns-message-builder';
 import { Opcode, ResponseCode } from './header';
 
@@ -75,6 +76,10 @@ describe('DNSMessageBuilder', () => {
       expect(() => {
         builder.setQDCount(-1);
       }).toThrow('out of range');
+
+      expect(() => {
+        builder.setQDCount(maxUInt16 + 1);
+      }).toThrow('out of range');
     });
   });
 
@@ -83,6 +88,16 @@ describe('DNSMessageBuilder', () => {
       const message = builder.setANCount(3).build();
       expect(message.ancount).toBe(3);
     });
+
+    it('should throw an error if a value outside the acceptable range is provided', () => {
+      expect(() => {
+        builder.setANCount(-1);
+      }).toThrow('out of range');
+
+      expect(() => {
+        builder.setANCount(maxUInt16 + 1);
+      }).toThrow('out of range');
+    });
   });
 
   describe('setNSCount()', () => {
@@ -90,12 +105,32 @@ describe('DNSMessageBuilder', () => {
       const message = builder.setNSCount(8).build();
       expect(message.nscount).toBe(8);
     });
+
+    it('should throw an error if a value outside the acceptable range is provided', () => {
+      expect(() => {
+        builder.setNSCount(-1);
+      }).toThrow('out of range');
+
+      expect(() => {
+        builder.setNSCount(maxUInt16 + 1);
+      }).toThrow('out of range');
+    });
   });
 
   describe('setARCount()', () => {
     it('should set the arcount property of the target DNSMessage object', () => {
       const message = builder.setARCount(4).build();
       expect(message.arcount).toBe(4);
+    });
+
+    it('should throw an error if a value outside the acceptable range is provided', () => {
+      expect(() => {
+        builder.setARCount(-1);
+      }).toThrow('out of range');
+
+      expect(() => {
+        builder.setARCount(maxUInt16 + 1);
+      }).toThrow('out of range');
     });
   });
 });
