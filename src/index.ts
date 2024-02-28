@@ -1,6 +1,6 @@
 import { encodeDomainInto } from './protocol/domain';
 import { QuestionEntry } from './protocol/question';
-import { encodeRR } from './protocol/resource-record';
+import { ResourceRecord } from './protocol/resource-record';
 import { CLASS } from './values/class';
 import { QCLASS } from './values/qclass';
 import { QTYPE } from './values/qtype';
@@ -35,11 +35,13 @@ const localhostLength = encodeDomainInto('localhost', buff, abcLength + offset);
 
 console.log(buff, localhostLength);
 
-const rr = encodeRR({
+const rr = new ResourceRecord({
   name: 'ab.chatgpt.com',
   type: QTYPE.AAAA,
   cls: CLASS.IN,
   ttl: 67,
   rdlength: 16,
   rdata: '2606:4700:4400::ac40:9b8d',
-});
+}).encode();
+
+console.log(rr);

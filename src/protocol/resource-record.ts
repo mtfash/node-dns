@@ -2,41 +2,49 @@ import { CLASS } from '../values/class';
 import { QTYPE } from '../values/qtype';
 import { encodeDomainInto } from './domain';
 
-export type ResourceRecord = {
+export class ResourceRecord {
   name: string;
   type: QTYPE;
   cls: CLASS;
   ttl: number;
   rdlength: number;
   rdata: string;
-};
 
-export function encodeRR({
-  name,
-  type,
-  cls,
-  ttl,
-  rdlength,
-  rdata,
-}: ResourceRecord): Buffer {
-  const length =
-    name.length +
-    2 + // 1 octet for first label's length + 1 octet for root label
-    2 + // 2 octets for type field
-    2 + // 2 octets for class field
-    4 + // 4 octets for ttl
-    2 + // 2 octets for rdlength field
-    rdlength; // length of rdata;
+  constructor(params: {
+    name: string;
+    type: QTYPE;
+    cls: CLASS;
+    ttl: number;
+    rdlength: number;
+    rdata: string;
+  }) {
+    const { name, type, cls, ttl, rdlength, rdata } = params;
 
-  const buff = Buffer.alloc(length);
+    this.name = name;
+    this.type = type;
+    this.cls = cls;
+    this.ttl = ttl;
+    this.rdlength = rdlength;
+    this.rdata = rdata;
+  }
 
-  const domainLength = encodeDomainInto(name, buff);
-  buff.writeUint16BE(type, domainLength);
-  buff.writeUint16BE(cls, domainLength + 2);
-  buff.writeUint32BE(ttl, domainLength + 4);
-  buff.writeUint16BE(rdlength, domainLength + 8);
+  encode(): Buffer {
+    const length =
+      this.name.length +
+      2 + // 1 octet for first label's length + 1 octet for root label
+      2 + // 2 octets for type field
+      2 + // 2 octets for class field
+      4 + // 4 octets for ttl
+      2 + // 2 octets for rdlength field
+      this.rdlength; // length of rdata;
 
-  // write rdata field
+    const buff = Buffer.alloc(length);
 
-  return buff;
+    const domainLength = encodeDomainInto(this.name, buff);
+    buff.writeUint16BE(this.type, domainLength);
+    buff.writeUint16BE(this.cls, domainLength + 2);
+    buff.writeUint32BE(this.ttl, domainLength + 4);
+    buff.writeUint16BE(this.rdlength, domainLength + 8);
+    return buff;
+  }
 }
