@@ -1,10 +1,10 @@
 import { DNSMessage } from './dns-message';
 import { DNSMessageHeader } from './header';
-import { Question } from './question';
+import { QuestionEntry } from './question';
 
 export class DNSMessageBuilder {
   private header: DNSMessageHeader;
-  private questions: Question[] = [];
+  private questions: QuestionEntry[] = [];
 
   constructor() {
     this.header = new DNSMessageHeader({ id: 1 });

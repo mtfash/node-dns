@@ -1,15 +1,15 @@
 import { encodeDomainInto } from './protocol/domain';
-import { decodeQuestion, encodeQuestion } from './protocol/question';
+import { QuestionEntry } from './protocol/question';
 import { encodeRR } from './protocol/resource-record';
 import { CLASS } from './values/class';
 import { QCLASS } from './values/qclass';
 import { QTYPE } from './values/qtype';
 
-const question = encodeQuestion({
+const question = new QuestionEntry({
   qname: 'gs-loc-new.ls-apple.com.akadns.net',
   qtype: QTYPE.HTTPS,
   qclass: QCLASS.IN,
-});
+}).encode();
 
 console.log(question.toString('base64'));
 
@@ -20,7 +20,7 @@ const questionBuff = Buffer.from([
   0x01,
 ]);
 
-const questionDecoded = decodeQuestion(questionBuff);
+const questionDecoded = new QuestionEntry(questionBuff);
 
 console.log(JSON.stringify(questionDecoded, null, 2));
 

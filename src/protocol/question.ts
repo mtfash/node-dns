@@ -2,30 +2,40 @@ import { QCLASS } from '../values/qclass';
 import { QTYPE } from '../values/qtype';
 import { decodeDomainFrom, encodeDomain } from './domain';
 
-export type Question = {
+type Question = {
   qname: string;
   qtype: QTYPE;
   qclass: QCLASS;
 };
 
-export function encodeQuestion({ qname, qtype, qclass }: Question): Buffer {
-  const qnameBuff = encodeDomain(qname);
-  const buff = Buffer.alloc(qnameBuff.byteLength + 4);
-  buff.set(qnameBuff, 0);
-  buff.writeUint16BE(qtype, qnameBuff.length);
-  buff.writeUint16BE(qclass, qnameBuff.length + 2);
-  return buff;
-}
+export class QuestionEntry {
+  qname: string;
+  qtype: QTYPE;
+  qclass: QCLASS;
 
-export function decodeQuestion(question: Buffer) {
-  const { domain, endOffset } = decodeDomainFrom(question, 0);
+  constructor(params: Question | Buffer) {
+    if ('qname' in params) {
+      const { qname, qtype, qclass } = params;
+      this.qname = qname;
+      this.qtype = qtype;
+      this.qclass = qclass;
+    } else {
+      const question = params as Buffer;
+      const { domain, endOffset } = decodeDomainFrom(question, 0);
+      const qtype: QTYPE = question.readUInt16BE(endOffset + 1);
+      const qclass: QCLASS = question.readUInt16BE(endOffset + 3);
+      this.qname = domain;
+      this.qtype = qtype;
+      this.qclass = qclass;
+    }
+  }
 
-  const qtype: QTYPE = question.readUInt16BE(endOffset + 1);
-  const qclass: QCLASS = question.readUInt16BE(endOffset + 3);
-
-  return {
-    qname: domain,
-    qtype,
-    qclass,
-  };
+  encode(): Buffer {
+    const qnameBuff = encodeDomain(this.qname);
+    const buff = Buffer.alloc(qnameBuff.byteLength + 4);
+    buff.set(qnameBuff, 0);
+    buff.writeUint16BE(this.qtype, qnameBuff.length);
+    buff.writeUint16BE(this.qclass, qnameBuff.length + 2);
+    return buff;
+  }
 }
