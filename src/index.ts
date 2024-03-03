@@ -10,15 +10,20 @@ const dnsMessageBuilder = new DNSMessageBuilder();
 const dnsMessage = dnsMessageBuilder
   .withHeader(
     new DNSMessageHeader({
-      id: 0xb788,
+      id: 0xa379,
       recursionDesired: true,
-      qdcount: 1,
+      qdcount: 2,
     })
   )
   .withQuestions([
     new QuestionEntry({
-      qname: 'gew1-spclient.spotify.com',
-      qtype: QTYPE.HTTPS,
+      qname: 'contacts.google.com',
+      qtype: QTYPE.AAAA,
+      qclass: QCLASS.IN,
+    }),
+    new QuestionEntry({
+      qname: 'www.microsoft.com',
+      qtype: QTYPE.AAAA,
       qclass: QCLASS.IN,
     }),
   ])
@@ -27,4 +32,4 @@ const dnsMessage = dnsMessageBuilder
 const dnsEncoder = new DNSEncoder(dnsMessage);
 const buffer = dnsEncoder.encode();
 
-console.log(buffer);
+console.log(buffer.toString('hex'));

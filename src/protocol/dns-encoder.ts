@@ -3,6 +3,7 @@ import { AA, Query, RA, RD, TC } from './header';
 
 export class DNSEncoder {
   private buffer: Buffer;
+  private __Q_OFFSETS: { offset: number; length: number }[] = [];
 
   constructor(private message: DNSMessage) {
     this.buffer = Buffer.alloc(512, 0, 'binary');
@@ -61,7 +62,7 @@ export class DNSEncoder {
     this.buffer.writeUInt16BE(header.arcount, 10);
   }
 
-  private encodeQuestions(): number {
+  private encodeQuestions() {
     const { questions } = this.message;
 
     let offset = 12;
@@ -76,15 +77,26 @@ export class DNSEncoder {
       this.buffer.writeUint16BE(question.qclass, _offset + 2);
 
       offset += domainLength + 4;
-    }
 
-    return offset - 12;
+      if (i === 0) {
+        this.__Q_OFFSETS.push({ offset, length: offset - 12 });
+      } else {
+        const previous = this.__Q_OFFSETS[i - 1]!.offset;
+        this.__Q_OFFSETS.push({ offset, length: offset - previous });
+      }
+    }
   }
 
   encode(): Buffer {
     this.encodeHeader();
-    const length = this.encodeQuestions();
+    this.encodeQuestions();
 
-    return this.buffer.subarray(0, 12 + length);
+    const lastQuestion = this.__Q_OFFSETS[this.message.header.qdcount - 1];
+
+    if (lastQuestion) {
+      return this.buffer.subarray(0, lastQuestion.offset);
+    }
+
+    throw new Error('qdcount mismatch the number of question entries');
   }
 }
