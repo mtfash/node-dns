@@ -4,6 +4,7 @@ This project is an implementation of DNS protocol in Node.js and Typescript for 
 
 ## Create a DNS query packet
 
+```javascript
     const dnsMessageBuilder = new DNSMessageBuilder();
 
     const dnsMessage = dnsMessageBuilder
@@ -33,7 +34,7 @@ This project is an implementation of DNS protocol in Node.js and Typescript for 
 
     console.log(buffer.toString('hex'));
     // output: a3790100000200000000000008636f6e746163747306676f6f676c6503636f6d00001c000103777777096d6963726f736f667403636f6d00001c0001
-
+```
 ## Tests
 
 The best way to learn how to use this project is to study the tests. You can run the tests by running `npm run test`.
