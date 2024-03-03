@@ -15,6 +15,11 @@ export class DNSMessageBuilder {
     return this;
   }
 
+  withQuestions(questions: QuestionEntry[]): DNSMessageBuilder {
+    this.questions = questions;
+    return this;
+  }
+
   build(): DNSMessage {
     return new DNSMessage(this.header, this.questions);
   }
