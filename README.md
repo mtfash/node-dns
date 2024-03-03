@@ -38,3 +38,9 @@ This project is an implementation of DNS protocol in Node.js and Typescript for 
 ## Tests
 
 The best way to learn how to use this project is to study the tests. You can run the tests by running `npm run test`.
+
+
+### References
+
+1. https://www.rfc-editor.org/rfc/rfc1034
+2. https://www.rfc-editor.org/rfc/rfc1035
