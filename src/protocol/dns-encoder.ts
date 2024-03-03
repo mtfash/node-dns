@@ -8,7 +8,7 @@ export class DNSEncoder {
     this.buffer = Buffer.alloc(512, 0, 'binary');
   }
 
-  encodeLabel(label: string, offset: number): number {
+  private encodeLabel(label: string, offset: number): number {
     const { length } = label;
 
     if (length > 63) {
@@ -21,7 +21,7 @@ export class DNSEncoder {
     return length + 1; // label length + 1 byte length byte
   }
 
-  encodeDomain(domain: string, offset: number): number {
+  private encodeDomain(domain: string, offset: number): number {
     const labels = domain.split('.');
 
     if (!domain.endsWith('.')) {
@@ -61,7 +61,7 @@ export class DNSEncoder {
     this.buffer.writeUInt16BE(header.arcount, 10);
   }
 
-  private encodeQuestions() {
+  private encodeQuestions(): number {
     const { questions } = this.message;
 
     let offset = 12;
@@ -77,12 +77,14 @@ export class DNSEncoder {
 
       offset += domainLength + 4;
     }
+
+    return offset - 12;
   }
 
   encode(): Buffer {
     this.encodeHeader();
-    this.encodeQuestions();
+    const length = this.encodeQuestions();
 
-    return this.buffer;
+    return this.buffer.subarray(0, 12 + length);
   }
 }
