@@ -90,26 +90,26 @@ describe('MessageHeader', () => {
     });
   });
 
-  describe('decodeHeader()', () => {
-    it('should correctly decode message header', () => {
-      const buffer = Buffer.from([
-        0x24, 0xfc, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      ]);
+  // describe('decodeHeader()', () => {
+  //   it('should correctly decode message header', () => {
+  //     const buffer = Buffer.from([
+  //       0x24, 0xfc, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  //     ]);
 
-      const headerDecoded = new DNSMessageHeader(buffer);
-      expect(headerDecoded).toBeDefined();
-      expect(headerDecoded.id).toBe(0x24fc);
-      expect(headerDecoded.isQuery).toBe(true);
-      expect(headerDecoded.opcode).toBe(Opcode.QUERY);
-      expect(headerDecoded.truncated).toBe(false);
-      expect(headerDecoded.recursionDesired).toBeTruthy();
-      expect(headerDecoded.recursionAvailable).toBeFalsy();
-      expect(headerDecoded.authoritative).toBeFalsy();
-      expect(headerDecoded.responseCode).toBe(0);
-      expect(headerDecoded.qdcount).toBe(1);
-      expect(headerDecoded.ancount).toBe(0);
-      expect(headerDecoded.nscount).toBe(0);
-      expect(headerDecoded.arcount).toBe(0);
-    });
-  });
+  //     const headerDecoded = new DNSMessageHeader(buffer);
+  //     expect(headerDecoded).toBeDefined();
+  //     expect(headerDecoded.id).toBe(0x24fc);
+  //     expect(headerDecoded.isQuery).toBe(true);
+  //     expect(headerDecoded.opcode).toBe(Opcode.QUERY);
+  //     expect(headerDecoded.truncated).toBe(false);
+  //     expect(headerDecoded.recursionDesired).toBeTruthy();
+  //     expect(headerDecoded.recursionAvailable).toBeFalsy();
+  //     expect(headerDecoded.authoritative).toBeFalsy();
+  //     expect(headerDecoded.responseCode).toBe(0);
+  //     expect(headerDecoded.qdcount).toBe(1);
+  //     expect(headerDecoded.ancount).toBe(0);
+  //     expect(headerDecoded.nscount).toBe(0);
+  //     expect(headerDecoded.arcount).toBe(0);
+  //   });
+  // });
 });

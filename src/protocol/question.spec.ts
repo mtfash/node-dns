@@ -66,15 +66,15 @@ describe('Questions', () => {
     });
   });
 
-  describe('constructor(Buffer)', () => {
-    it('should correctly decode question buffer to question object', () => {
-      decodeEntries.forEach(({ buffer, expected }) => {
-        const question = new QuestionEntry(buffer);
-        expect(question).toBeDefined();
-        expect(question.qname).toBe(expected.qname);
-        expect(question.qtype).toBe(expected.qtype);
-        expect(question.qclass).toBe(expected.qclass);
-      });
-    });
-  });
+  // describe('constructor(Buffer)', () => {
+  //   it('should correctly decode question buffer to question object', () => {
+  //     decodeEntries.forEach(({ buffer, expected }) => {
+  //       const question = new QuestionEntry(buffer);
+  //       expect(question).toBeDefined();
+  //       expect(question.qname).toBe(expected.qname);
+  //       expect(question.qtype).toBe(expected.qtype);
+  //       expect(question.qclass).toBe(expected.qclass);
+  //     });
+  //   });
+  // });
 });

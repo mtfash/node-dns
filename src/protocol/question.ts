@@ -13,21 +13,11 @@ export class QuestionEntry {
   qtype: QTYPE;
   qclass: QCLASS;
 
-  constructor(params: Question | Buffer) {
-    if ('qname' in params) {
-      const { qname, qtype, qclass } = params;
-      this.qname = qname;
-      this.qtype = qtype;
-      this.qclass = qclass;
-    } else {
-      const question = params as Buffer;
-      const { domain, endOffset } = decodeDomainFrom(question, 0);
-      const qtype: QTYPE = question.readUInt16BE(endOffset + 1);
-      const qclass: QCLASS = question.readUInt16BE(endOffset + 3);
-      this.qname = domain;
-      this.qtype = qtype;
-      this.qclass = qclass;
-    }
+  constructor(params: Question) {
+    const { qname, qtype, qclass } = params;
+    this.qname = qname;
+    this.qtype = qtype;
+    this.qclass = qclass;
   }
 
   encode(): Buffer {
