@@ -4,31 +4,35 @@ import { AA, Query, RA, RD, TC } from './header';
 export class DNSEncoder {
   private buffer: Buffer;
   private __Q_OFFSETS: { offset: number; length: number }[] = [];
-  private __A_OFFSETS: { offset: number; length: number }[] = [];
 
-  private endOffset = 0;
+  private offset = 0;
 
   constructor(private message: DNSMessage) {
     this.buffer = Buffer.alloc(512, 0, 'binary');
   }
 
-  private encodeLabel(label: string, offset: number): number {
+  private encodeLabel(label: string): number {
     const { length } = label;
 
     if (length > 63) {
       throw new Error(`Invalid label length: ${label} (${length})`);
     }
 
-    this.buffer.writeUint8(length, offset);
-    this.buffer.set(Buffer.from(label, 'ascii'), offset + 1);
+    this.offset = this.buffer.writeUint8(length, this.offset);
 
-    return length + 1; // label length + 1 byte length byte
+    this.buffer.set(Buffer.from(label, 'ascii'), this.offset);
+
+    this.offset += length;
+
+    return length + 1; // +1 for length byte
   }
 
-  private encodeDomain(domain: string, offset: number): number {
+  private encodeDomain(domain: string): number {
     const labels = domain.toLowerCase().split('.');
 
-    if (offset !== 12) {
+    const startOffset = this.offset;
+
+    if (this.offset !== 12) {
       const searchLabels = Array.from(labels);
 
       do {
@@ -44,12 +48,13 @@ export class DNSEncoder {
 
           const end = labels.length - searchLabels.length;
 
-          let endOffset = offset;
           for (let i = 0; i < end; i++) {
-            endOffset += this.encodeLabel(labels[i]!, endOffset);
+            this.encodeLabel(labels[i]!);
           }
 
-          return this.buffer.writeUint16BE(pointer, endOffset) - offset;
+          this.offset = this.buffer.writeUint16BE(pointer, this.offset);
+
+          return this.offset - startOffset;
         }
 
         searchLabels.splice(0, 1);
@@ -60,13 +65,9 @@ export class DNSEncoder {
       labels.push('');
     }
 
-    let endOffset = offset;
+    labels.forEach((label) => this.encodeLabel(label));
 
-    labels.forEach(
-      (label) => (endOffset += this.encodeLabel(label, endOffset))
-    );
-
-    return endOffset - offset; // domain length
+    return this.offset - startOffset; // domain length
   }
 
   private encodeHeader() {
@@ -89,34 +90,31 @@ export class DNSEncoder {
     this.buffer.writeUInt16BE(header.qdcount, 4);
     this.buffer.writeUInt16BE(header.ancount, 6);
     this.buffer.writeUInt16BE(header.nscount, 8);
-    this.buffer.writeUInt16BE(header.arcount, 10);
-    this.endOffset = 12;
+    this.offset = this.buffer.writeUInt16BE(header.arcount, 10);
   }
 
   private encodeQuestions() {
     const { questions } = this.message;
 
-    let offset = 12;
-
     for (let i = 0; i < questions.length; i++) {
       const question = questions[i]!;
-      const domainLength = this.encodeDomain(question.qname, offset);
+      this.offset += this.encodeDomain(question.qname);
 
-      const _offset = offset + domainLength;
-
-      this.buffer.writeUint16BE(question.qtype, _offset);
-      this.buffer.writeUint16BE(question.qclass, _offset + 2);
-
-      offset += domainLength + 4;
+      this.offset = this.buffer.writeUint16BE(question.qtype, this.offset);
+      this.offset = this.buffer.writeUint16BE(question.qclass, this.offset);
 
       if (i === 0) {
-        this.__Q_OFFSETS.push({ offset, length: offset - 12 });
+        this.__Q_OFFSETS.push({
+          offset: this.offset,
+          length: this.offset - 12,
+        });
       } else {
         const previous = this.__Q_OFFSETS[i - 1]!.offset;
-        this.__Q_OFFSETS.push({ offset, length: offset - previous });
+        this.__Q_OFFSETS.push({
+          offset: this.offset,
+          length: this.offset - previous,
+        });
       }
-
-      this.endOffset = offset;
     }
   }
 
@@ -127,19 +125,15 @@ export class DNSEncoder {
       return;
     }
 
-    let offset = this.__Q_OFFSETS[this.__Q_OFFSETS.length - 1]!.offset;
-
     for (let i = 0; i < answer.length; i++) {
       const record = answer[i]!;
 
-      const domainLength = this.encodeDomain(record.name, offset);
+      const domainLength = this.encodeDomain(record.name);
 
-      offset += domainLength;
-
-      this.buffer.writeUint16BE(record.type, offset);
-      this.buffer.writeUint16BE(record.cls, offset + 2);
-      this.buffer.writeUint32BE(record.ttl, offset + 4);
-      this.endOffset = this.buffer.writeUint16BE(record.rdlength, offset + 8);
+      this.offset = this.buffer.writeUint16BE(record.type, this.offset);
+      this.offset = this.buffer.writeUint16BE(record.cls, this.offset);
+      this.offset = this.buffer.writeUint32BE(record.ttl, this.offset);
+      this.offset = this.buffer.writeUint16BE(record.rdlength, this.offset);
       // TODO: We're missing the data
 
       /*
@@ -152,8 +146,6 @@ export class DNSEncoder {
       / = 16 octets;
       */
       const rrLength = domainLength + 16 + record.rdlength; // TODO: This might not be correct
-
-      this.__A_OFFSETS.push({ length: rrLength, offset: this.endOffset }); // TODO: This is not correct
     }
   }
 
@@ -162,6 +154,6 @@ export class DNSEncoder {
     this.encodeQuestions();
     this.encodeAnswer();
 
-    return this.buffer.subarray(0, this.endOffset);
+    return this.buffer.subarray(0, this.offset);
   }
 }

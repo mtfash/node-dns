@@ -153,50 +153,6 @@ export class DNSMessageHeader {
     }
   }
 
-  decode() {
-    //   const buffer = params;
-    //   if (buffer.byteLength !== 12) {
-    //     throw new Error(
-    //       `Invalid header length: ${buffer} (${buffer.byteLength} bytes)`
-    //     );
-    //   }
-    //   const num32Bits = buffer.readUInt32BE();
-    //   let opcode: Opcode = Opcode.QUERY;
-    //   if ((num32Bits & Opcode.IQUERY) === Opcode.IQUERY) {
-    //     opcode = Opcode.IQUERY;
-    //   } else if ((num32Bits & Opcode.STATUS) === Opcode.STATUS) {
-    //     opcode = Opcode.STATUS;
-    //   } else if ((num32Bits ^ OPCODE_MASK) === OPCODE_MASK) {
-    //     opcode = Opcode.QUERY;
-    //   }
-    //   let rc: ResponseCode = ResponseCode.NoError;
-    //   if ((num32Bits ^ RCODE_MASK) === RCODE_MASK) {
-    //     rc = ResponseCode.NoError;
-    //   } else if ((num32Bits & RCODE_1) === RCODE_1) {
-    //     rc = ResponseCode.FormatError;
-    //   } else if ((num32Bits & RCODE_2) === RCODE_2) {
-    //     rc = ResponseCode.ServerFailure;
-    //   } else if ((num32Bits & RCODE_3) === RCODE_3) {
-    //     rc = ResponseCode.NameError;
-    //   } else if ((num32Bits & RCODE_4) === RCODE_4) {
-    //     rc = ResponseCode.NotImplemented;
-    //   } else if ((num32Bits & RCODE_5) === RCODE_5) {
-    //     rc = ResponseCode.Refused;
-    //   }
-    //   this.id = buffer.readUInt16BE(0);
-    //   this.isQuery = (num32Bits & QRY_RESPONSE) === 0;
-    //   this.opcode = opcode;
-    //   this.authoritative = !!(num32Bits & AA);
-    //   this.truncated = !!(num32Bits & TC);
-    //   this.recursionDesired = !!(num32Bits & RD);
-    //   this.recursionAvailable = !!(num32Bits & RA);
-    //   this.responseCode = rc;
-    //   this.qdcount = buffer.readUint16BE(4);
-    //   this.ancount = buffer.readUint16BE(6);
-    //   this.nscount = buffer.readUint16BE(8);
-    //   this.arcount = buffer.readUint16BE(10);
-  }
-
   encode(): Buffer {
     const buffer = Buffer.alloc(12, 0, 'ascii');
 
