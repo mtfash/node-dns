@@ -5,35 +5,41 @@ This project is an implementation of DNS protocol in Node.js and Typescript for 
 ## Create a DNS query packet
 
 ```javascript
-    const dnsMessageBuilder = new DNSMessageBuilder();
+const dnsMessage = dnsMessageBuilder
+  .withHeader(
+    new DNSMessageHeader({
+      id: 0x6d52,
+      isQuery: false,
+      recursionDesired: true,
+      recursionAvailable: true,
+      qdcount: 1,
+      ancount: 1,
+    })
+  )
+  .withQuestions([
+    new QuestionEntry({
+      qname: 'signaler-pa.clients6.google.com',
+      qtype: QTYPE.AAAA,
+      qclass: QCLASS.IN,
+    }),
+  ])
+  .withAnswer([
+    new ResourceRecord({
+      name: 'signaler-pa.clients6.google.com',
+      type: QTYPE.AAAA,
+      cls: CLASS.IN,
+      ttl: 46,
+      rdlength: 16,
+      rdata: '2a00:1450:4019:802::200a',
+    }),
+  ])
+  .build();
 
-    const dnsMessage = dnsMessageBuilder
-      .withHeader(
-        new DNSMessageHeader({
-          id: 0xa379,
-          recursionDesired: true,
-          qdcount: 2,
-        })
-      )
-      .withQuestions([
-        new QuestionEntry({
-          qname: 'contacts.google.com',
-          qtype: QTYPE.AAAA,
-          qclass: QCLASS.IN,
-        }),
-        new QuestionEntry({
-          qname: 'www.microsoft.com',
-          qtype: QTYPE.AAAA,
-          qclass: QCLASS.IN,
-        }),
-      ])
-      .build();
+const encoder = new DNSEncoder(dnsMessage);
+const buffer = encoder.encode();
 
-    const encoder = new DNSEncoder(dnsMessage);
-    const buffer = encoder.encode();
-
-    console.log(buffer.toString('hex'));
-    // output: a3790100000200000000000008636f6e746163747306676f6f676c6503636f6d00001c000103777777096d6963726f736f667403636f6d00001c0001
+console.log(buffer.toString('hex'));
+// output:   6d52818000010001000000000b7369676e616c65722d706108636c69656e74733606676f6f676c6503636f6d00001c0001c00c001c00010000002e0010
 ```
 ## Tests
 
