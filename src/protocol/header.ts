@@ -41,7 +41,7 @@ export enum ResponseCode {
   Refused = RCODE_5,
 }
 
-type Header = {
+export type Header = {
   id: number;
   isQuery?: boolean;
   opcode?: Opcode;

@@ -4,6 +4,9 @@ import { AA, Query, RA, RD, TC } from './header';
 export class DNSEncoder {
   private buffer: Buffer;
   private __Q_OFFSETS: { offset: number; length: number }[] = [];
+  private __A_OFFSETS: { offset: number; length: number }[] = [];
+
+  private endOffset = 0;
 
   constructor(private message: DNSMessage) {
     this.buffer = Buffer.alloc(512, 0, 'binary');
@@ -23,20 +26,47 @@ export class DNSEncoder {
   }
 
   private encodeDomain(domain: string, offset: number): number {
-    const labels = domain.split('.');
+    const labels = domain.toLowerCase().split('.');
+
+    if (offset !== 12) {
+      const searchLabels = Array.from(labels);
+
+      do {
+        const search = searchLabels.join('.');
+
+        const index = this.message.questions.findIndex(
+          (q) => q.qname.toLowerCase() === search
+        );
+
+        if (index !== -1) {
+          const { length, offset } = this.__Q_OFFSETS[index]!;
+          const pointer = 0xc000 | (offset - length);
+
+          const end = labels.length - searchLabels.length;
+
+          let endOffset = offset;
+          for (let i = 0; i < end; i++) {
+            endOffset += this.encodeLabel(labels[i]!, endOffset);
+          }
+
+          return this.buffer.writeUint16BE(pointer, endOffset) - offset;
+        }
+
+        searchLabels.splice(0, 1);
+      } while (searchLabels.length);
+    }
 
     if (!domain.endsWith('.')) {
       labels.push('');
     }
 
-    let index = offset;
+    let endOffset = offset;
 
-    labels.forEach((label) => {
-      const labelLength = this.encodeLabel(label, index);
-      index += labelLength;
-    });
+    labels.forEach(
+      (label) => (endOffset += this.encodeLabel(label, endOffset))
+    );
 
-    return index - offset;
+    return endOffset - offset; // domain length
   }
 
   private encodeHeader() {
@@ -60,6 +90,7 @@ export class DNSEncoder {
     this.buffer.writeUInt16BE(header.ancount, 6);
     this.buffer.writeUInt16BE(header.nscount, 8);
     this.buffer.writeUInt16BE(header.arcount, 10);
+    this.endOffset = 12;
   }
 
   private encodeQuestions() {
@@ -84,19 +115,53 @@ export class DNSEncoder {
         const previous = this.__Q_OFFSETS[i - 1]!.offset;
         this.__Q_OFFSETS.push({ offset, length: offset - previous });
       }
+
+      this.endOffset = offset;
+    }
+  }
+
+  private encodeAnswer() {
+    const { answer } = this.message;
+
+    if (answer.length === 0) {
+      return;
+    }
+
+    let offset = this.__Q_OFFSETS[this.__Q_OFFSETS.length - 1]!.offset;
+
+    for (let i = 0; i < answer.length; i++) {
+      const record = answer[i]!;
+
+      const domainLength = this.encodeDomain(record.name, offset);
+
+      offset += domainLength;
+
+      this.buffer.writeUint16BE(record.type, offset);
+      this.buffer.writeUint16BE(record.cls, offset + 2);
+      this.buffer.writeUint32BE(record.ttl, offset + 4);
+      this.endOffset = this.buffer.writeUint16BE(record.rdlength, offset + 8);
+      // TODO: We're missing the data
+
+      /*
+      /   1 octet for first label's length
+      / + 1 octet for root label
+      / + 2 octets for type field +
+      / + 2 octets for class field +
+      / + 4 octets for ttl
+      / + 2 octets for rdlength field +
+      / = 16 octets;
+      */
+      const rrLength = domainLength + 16 + record.rdlength; // TODO: This might not be correct
+
+      this.__A_OFFSETS.push({ length: rrLength, offset: this.endOffset }); // TODO: This is not correct
     }
   }
 
   encode(): Buffer {
     this.encodeHeader();
     this.encodeQuestions();
+    this.encodeAnswer();
 
-    const lastQuestion = this.__Q_OFFSETS[this.message.header.qdcount - 1];
-
-    if (lastQuestion) {
-      return this.buffer.subarray(0, lastQuestion.offset);
-    }
-
-    throw new Error('qdcount mismatch the number of question entries');
+    return this.buffer.subarray(0, this.endOffset);
   }
 }
