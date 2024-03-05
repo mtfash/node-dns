@@ -12,29 +12,37 @@ const dnsMessageBuilder = new DNSMessageBuilder();
 const dnsMessage = dnsMessageBuilder
   .withHeader(
     new DNSMessageHeader({
-      id: 0x6d52,
+      id: 0xaee2,
       isQuery: false,
       recursionDesired: true,
       recursionAvailable: true,
       qdcount: 1,
-      ancount: 1,
+      ancount: 2,
     })
   )
   .withQuestions([
     new QuestionEntry({
-      qname: 'signaler-pa.clients6.google.com',
-      qtype: QTYPE.AAAA,
+      qname: 'gateway.instagram.com',
+      qtype: QTYPE.A,
       qclass: QCLASS.IN,
     }),
   ])
   .withAnswer([
     new ResourceRecord({
-      name: 'signaler-pa.clients6.google.com',
-      type: QTYPE.AAAA,
+      name: 'gateway.instagram.com',
+      type: QTYPE.CNAME,
       cls: CLASS.IN,
-      ttl: 46,
-      rdlength: 16,
-      rdata: '2a00:1450:4019:802::200a',
+      ttl: 443,
+      rdlength: 20,
+      rdata: 'dgw.c10r.facebook.com',
+    }),
+    new ResourceRecord({
+      name: 'dgw.c10r.facebook.com',
+      type: QTYPE.A,
+      cls: CLASS.IN,
+      ttl: 10,
+      rdlength: 4,
+      rdata: '157.240.195.3',
     }),
   ])
   .build();
@@ -44,5 +52,5 @@ const buffer = encoder.encode();
 
 console.log(buffer.toString('hex'));
 
-// wireshark output: 6d52818000010001000000000b7369676e616c65722d706108636c69656e74733606676f6f676c6503636f6d00001c0001c00c001c00010000002e00102a00145040190802000000000000200a
-// encoder output:   6d52818000010001000000000b7369676e616c65722d706108636c69656e74733606676f6f676c6503636f6d00001c0001c00c001c00010000002e0010
+// wireshark output: aee281800001000200000000076761746577617909696e7374616772616d03636f6d0000010001c00c00050001000001bb00140364677704633130720866616365626f6f6bc01ec033000100010000000a00049df0c303
+// encoder output:   aee281800001000200000000076761746577617909696e7374616772616d03636f6d0000010001c00c00050001000001bb00140364677704633130720866616365626f6f6b03636f6d00c033000100010000000a00040000009d000000f0000000c300000003

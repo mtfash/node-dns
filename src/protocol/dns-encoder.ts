@@ -1,5 +1,8 @@
+import { QTYPE } from '../values/qtype';
 import { DNSMessage } from './dns-message';
 import { AA, Query, RA, RD, TC } from './header';
+
+type RDataEncoder = (arg: string, encoder: DNSEncoder) => number;
 
 export class DNSEncoder {
   private buffer: Buffer;
@@ -7,6 +10,21 @@ export class DNSEncoder {
   private offset = 0;
 
   private names: { name: string; offset: number; length: number }[] = [];
+
+  private static RDataEncoders: {
+    [key: number]: RDataEncoder;
+  } = {
+    [QTYPE.CNAME]: (domain: string, that: DNSEncoder): number => {
+      return that.encodeDomain(domain);
+    },
+    [QTYPE.A]: (ipv4: string, that: DNSEncoder): number => {
+      ipv4.split('.').forEach((field) => {
+        that.offset = that.buffer.writeUint32BE(parseInt(field), that.offset);
+      });
+
+      return that.offset;
+    },
+  };
 
   constructor(private message: DNSMessage) {
     this.buffer = Buffer.alloc(512, 0, 'binary');
@@ -54,7 +72,7 @@ export class DNSEncoder {
 
           this.offset = this.buffer.writeUint16BE(pointer, this.offset);
 
-          return this.offset - startOffset;
+          return this.offset;
         }
 
         searchLabels.splice(0, 1);
@@ -67,15 +85,13 @@ export class DNSEncoder {
 
     labels.forEach((label) => this.encodeLabel(label));
 
-    const cache = {
+    this.names.push({
       name: domain.toLowerCase(),
       offset: this.offset,
       length: this.offset - startOffset,
-    };
+    });
 
-    this.names.push(cache);
-
-    return cache.length;
+    return this.offset;
   }
 
   private encodeHeader() {
@@ -106,7 +122,7 @@ export class DNSEncoder {
 
     for (let i = 0; i < questions.length; i++) {
       const question = questions[i]!;
-      this.offset += this.encodeDomain(question.qname);
+      this.offset = this.encodeDomain(question.qname);
 
       this.offset = this.buffer.writeUint16BE(question.qtype, this.offset);
       this.offset = this.buffer.writeUint16BE(question.qclass, this.offset);
@@ -123,24 +139,20 @@ export class DNSEncoder {
     for (let i = 0; i < answer.length; i++) {
       const record = answer[i]!;
 
-      const domainLength = this.encodeDomain(record.name);
+      this.encodeDomain(record.name);
 
       this.offset = this.buffer.writeUint16BE(record.type, this.offset);
       this.offset = this.buffer.writeUint16BE(record.cls, this.offset);
       this.offset = this.buffer.writeUint32BE(record.ttl, this.offset);
       this.offset = this.buffer.writeUint16BE(record.rdlength, this.offset);
-      // TODO: We're missing the data
 
-      /*
-      /   1 octet for first label's length
-      / + 1 octet for root label
-      / + 2 octets for type field +
-      / + 2 octets for class field +
-      / + 4 octets for ttl
-      / + 2 octets for rdlength field +
-      / = 16 octets;
-      */
-      const rrLength = domainLength + 16 + record.rdlength; // TODO: This might not be correct
+      const rdataEncoder = DNSEncoder.RDataEncoders[record.type];
+
+      if (!rdataEncoder) {
+        throw new Error(`Resource records ${record.type} is not supported`);
+      }
+
+      this.offset = rdataEncoder(record.rdata, this);
     }
   }
 
