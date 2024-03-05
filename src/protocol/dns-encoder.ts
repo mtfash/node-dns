@@ -3,9 +3,10 @@ import { AA, Query, RA, RD, TC } from './header';
 
 export class DNSEncoder {
   private buffer: Buffer;
-  private __Q_OFFSETS: { offset: number; length: number }[] = [];
 
   private offset = 0;
+
+  private names: { name: string; offset: number; length: number }[] = [];
 
   constructor(private message: DNSMessage) {
     this.buffer = Buffer.alloc(512, 0, 'binary');
@@ -38,12 +39,11 @@ export class DNSEncoder {
       do {
         const search = searchLabels.join('.');
 
-        const index = this.message.questions.findIndex(
-          (q) => q.qname.toLowerCase() === search
-        );
+        const cachedName = this.names.find(({ name }) => name === search);
 
-        if (index !== -1) {
-          const { length, offset } = this.__Q_OFFSETS[index]!;
+        if (cachedName) {
+          const { length, offset } = cachedName;
+
           const pointer = 0xc000 | (offset - length);
 
           const end = labels.length - searchLabels.length;
@@ -67,7 +67,15 @@ export class DNSEncoder {
 
     labels.forEach((label) => this.encodeLabel(label));
 
-    return this.offset - startOffset; // domain length
+    const cache = {
+      name: domain.toLowerCase(),
+      offset: this.offset,
+      length: this.offset - startOffset,
+    };
+
+    this.names.push(cache);
+
+    return cache.length;
   }
 
   private encodeHeader() {
@@ -79,8 +87,8 @@ export class DNSEncoder {
     this.buffer.writeUInt16BE(
       query |
         header.opcode |
-        (header.authoritative ? AA : 0) |
         (header.truncated ? TC : 0) |
+        (header.authoritative ? AA : 0) |
         (header.recursionDesired ? RD : 0) |
         (header.recursionAvailable ? RA : 0) |
         header.responseCode,
@@ -102,19 +110,6 @@ export class DNSEncoder {
 
       this.offset = this.buffer.writeUint16BE(question.qtype, this.offset);
       this.offset = this.buffer.writeUint16BE(question.qclass, this.offset);
-
-      if (i === 0) {
-        this.__Q_OFFSETS.push({
-          offset: this.offset,
-          length: this.offset - 12,
-        });
-      } else {
-        const previous = this.__Q_OFFSETS[i - 1]!.offset;
-        this.__Q_OFFSETS.push({
-          offset: this.offset,
-          length: this.offset - previous,
-        });
-      }
     }
   }
 
