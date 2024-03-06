@@ -12,7 +12,7 @@ const dnsMessageBuilder = new DNSMessageBuilder();
 const dnsMessage = dnsMessageBuilder
   .withHeader(
     new DNSMessageHeader({
-      id: 0x8739,
+      id: 0x8d46,
       isQuery: false,
       recursionDesired: true,
       recursionAvailable: true,
@@ -22,32 +22,31 @@ const dnsMessage = dnsMessageBuilder
   )
   .withQuestions([
     new QuestionEntry({
-      qname: 'gateway.instagram.com',
-      qtype: QTYPE.A,
+      qname: 'graph.instagram.com',
+      qtype: QTYPE.AAAA,
       qclass: QCLASS.IN,
     }),
   ])
   .withAnswer([
     new ResourceRecord({
-      name: 'gateway.instagram.com',
+      name: 'graph.instagram.com',
       type: QTYPE.CNAME,
       cls: CLASS.IN,
-      ttl: 2219,
-      rdlength: 20,
-      rdata: 'dgw.c10r.facebook.com',
+      ttl: 2210,
+      rdlength: 17,
+      rdata: 'instagram.c10r.instagram.com',
     }),
     new ResourceRecord({
-      name: 'dgw.c10r.facebook.com',
-      type: QTYPE.A,
+      name: 'instagram.c10r.instagram.com',
+      type: QTYPE.AAAA,
       cls: CLASS.IN,
-      ttl: 40,
-      rdlength: 4,
-      rdata: '157.240.195.3',
+      ttl: 47,
+      rdlength: 16,
+      rdata: '2a03:2880:f242:cb:face:b00c:0:43fe',
     }),
   ])
   .build();
 
 const encoder = new DNSEncoder(dnsMessage);
 const buffer = encoder.encode();
-
 console.log(buffer.toString('hex'));

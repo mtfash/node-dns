@@ -24,6 +24,25 @@ export class DNSEncoder {
 
       return that.offset;
     },
+    [QTYPE.AAAA]: (ipv6: string, that: DNSEncoder): number => {
+      const groups = ipv6.split(':');
+
+      for (let i = 0; i < groups.length; i++) {
+        const group = groups[i];
+        if (group) {
+          const iGrp = parseInt(group, 16);
+          that.offset = that.buffer.writeUInt16BE(iGrp, that.offset);
+        } else {
+          const removedGroups = 8 - groups.length;
+
+          for (let j = 0; j < removedGroups; j++) {
+            console.log(i, j, i);
+            that.offset = that.buffer.writeUInt16BE(0, that.offset);
+          }
+        }
+      }
+      return that.offset;
+    },
   };
 
   constructor(private message: DNSMessage) {
