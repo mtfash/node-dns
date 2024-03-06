@@ -9,7 +9,7 @@ export class DNSEncoder {
 
   private offset = 0;
 
-  private names: { name: string; offset: number; length: number }[] = [];
+  private names: { name: string; offset: number }[] = [];
 
   private static RDataEncoders: {
     [key: number]: RDataEncoder;
@@ -19,7 +19,7 @@ export class DNSEncoder {
     },
     [QTYPE.A]: (ipv4: string, that: DNSEncoder): number => {
       ipv4.split('.').forEach((field) => {
-        that.offset = that.buffer.writeUint32BE(parseInt(field), that.offset);
+        that.offset = that.buffer.writeUint8(parseInt(field), that.offset);
       });
 
       return that.offset;
@@ -49,8 +49,6 @@ export class DNSEncoder {
   private encodeDomain(domain: string): number {
     const labels = domain.toLowerCase().split('.');
 
-    const startOffset = this.offset;
-
     if (this.offset !== 12) {
       const searchLabels = Array.from(labels);
 
@@ -60,13 +58,16 @@ export class DNSEncoder {
         const cachedName = this.names.find(({ name }) => name === search);
 
         if (cachedName) {
-          const { length, offset } = cachedName;
-
-          const pointer = 0xc000 | (offset - length);
+          const pointer = 0xc000 | cachedName.offset;
 
           const end = labels.length - searchLabels.length;
 
           for (let i = 0; i < end; i++) {
+            this.names.push({
+              name: labels.slice(i).join('.'),
+              offset: this.offset,
+            });
+
             this.encodeLabel(labels[i]!);
           }
 
@@ -79,17 +80,18 @@ export class DNSEncoder {
       } while (searchLabels.length);
     }
 
-    if (!domain.endsWith('.')) {
-      labels.push('');
-    }
+    labels.forEach((label, index) => {
+      this.names.push({
+        name: labels.slice(index).join('.'),
+        offset: this.offset,
+      });
 
-    labels.forEach((label) => this.encodeLabel(label));
-
-    this.names.push({
-      name: domain.toLowerCase(),
-      offset: this.offset,
-      length: this.offset - startOffset,
+      this.encodeLabel(label);
     });
+
+    if (!domain.endsWith('.')) {
+      this.encodeLabel('');
+    }
 
     return this.offset;
   }

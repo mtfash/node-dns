@@ -5,32 +5,42 @@ This project is an implementation of DNS protocol in Node.js and Typescript for 
 ## Create a DNS query packet
 
 ```javascript
+const dnsMessageBuilder = new DNSMessageBuilder();
+
 const dnsMessage = dnsMessageBuilder
   .withHeader(
     new DNSMessageHeader({
-      id: 0x6d52,
+      id: 0x8739,
       isQuery: false,
       recursionDesired: true,
       recursionAvailable: true,
       qdcount: 1,
-      ancount: 1,
+      ancount: 2,
     })
   )
   .withQuestions([
     new QuestionEntry({
-      qname: 'signaler-pa.clients6.google.com',
-      qtype: QTYPE.AAAA,
+      qname: 'gateway.instagram.com',
+      qtype: QTYPE.A,
       qclass: QCLASS.IN,
     }),
   ])
   .withAnswer([
     new ResourceRecord({
-      name: 'signaler-pa.clients6.google.com',
-      type: QTYPE.AAAA,
+      name: 'gateway.instagram.com',
+      type: QTYPE.CNAME,
       cls: CLASS.IN,
-      ttl: 46,
-      rdlength: 16,
-      rdata: '2a00:1450:4019:802::200a',
+      ttl: 2219,
+      rdlength: 20,
+      rdata: 'dgw.c10r.facebook.com',
+    }),
+    new ResourceRecord({
+      name: 'dgw.c10r.facebook.com',
+      type: QTYPE.A,
+      cls: CLASS.IN,
+      ttl: 40,
+      rdlength: 4,
+      rdata: '157.240.195.3',
     }),
   ])
   .build();
@@ -39,12 +49,11 @@ const encoder = new DNSEncoder(dnsMessage);
 const buffer = encoder.encode();
 
 console.log(buffer.toString('hex'));
-// output:   6d52818000010001000000000b7369676e616c65722d706108636c69656e74733606676f6f676c6503636f6d00001c0001c00c001c00010000002e0010
 ```
+
 ## Tests
 
 The best way to learn how to use this project is to study the tests. You can run the tests by running `npm run test`.
-
 
 ### References
 
