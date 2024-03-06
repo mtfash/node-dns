@@ -36,7 +36,6 @@ export class DNSEncoder {
           const removedGroups = 8 - groups.length;
 
           for (let j = 0; j < removedGroups; j++) {
-            console.log(i, j, i);
             that.offset = that.buffer.writeUInt16BE(0, that.offset);
           }
         }
