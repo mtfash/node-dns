@@ -67,7 +67,7 @@ const entries: { message: DNSMessage; base64: string }[] = [
           qclass: QCLASS.IN,
         }),
       ])
-      .withAnswer([
+      .withAnswers([
         new ResourceRecord({
           name: 'collector.github.com',
           type: QTYPE.CNAME,
@@ -141,7 +141,7 @@ const entries: { message: DNSMessage; base64: string }[] = [
           ancount: 3,
         })
       )
-      .withAnswer([
+      .withAnswers([
         new ResourceRecord({
           name: 'ocsp2-lb.apple.com.akadns.net',
           type: QTYPE.CNAME,

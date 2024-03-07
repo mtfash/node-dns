@@ -27,7 +27,7 @@ const dnsMessage = dnsMessageBuilder
       qclass: QCLASS.IN,
     }),
   ])
-  .withAnswer([
+  .withAnswers([
     new ResourceRecord({
       name: 'graph.instagram.com',
       type: QTYPE.CNAME,

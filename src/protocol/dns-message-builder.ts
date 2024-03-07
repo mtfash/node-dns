@@ -29,7 +29,7 @@ export class DNSMessageBuilder {
     return this;
   }
 
-  withAnswer(resourceRecords: ResourceRecord[]): DNSMessageBuilder {
+  withAnswers(resourceRecords: ResourceRecord[]): DNSMessageBuilder {
     this.answer = resourceRecords;
     return this;
   }
