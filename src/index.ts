@@ -1,52 +1,55 @@
-import { DNSEncoder } from './protocol/dns-encoder';
+import dgram from 'dgram';
 import { DNSMessageBuilder } from './protocol/dns-message-builder';
 import { DNSMessageHeader } from './protocol/header';
-import { ResourceRecord } from './protocol/resource-record';
 import { QuestionEntry } from './protocol/question';
+import { DNSEncoder } from './protocol/dns-encoder';
 import { QCLASS } from './values/qclass';
-import { CLASS } from './values/class';
 import { QTYPE } from './values/qtype';
 
-const dnsMessageBuilder = new DNSMessageBuilder();
+// Looking up www.instagram.com from google's name servers
 
-const dnsMessage = dnsMessageBuilder
+const builder = new DNSMessageBuilder();
+const message = builder
   .withHeader(
     new DNSMessageHeader({
-      id: 0x8d46,
-      isQuery: false,
+      id: 0x01,
+      isQuery: true,
       recursionDesired: true,
-      recursionAvailable: true,
       qdcount: 1,
-      ancount: 2,
     })
   )
   .withQuestions([
     new QuestionEntry({
-      qname: 'graph.instagram.com',
-      qtype: QTYPE.AAAA,
+      qname: 'www.instagram.com',
       qclass: QCLASS.IN,
-    }),
-  ])
-  .withAnswers([
-    new ResourceRecord({
-      name: 'graph.instagram.com',
-      type: QTYPE.CNAME,
-      cls: CLASS.IN,
-      ttl: 2210,
-      rdlength: 17,
-      rdata: 'instagram.c10r.instagram.com',
-    }),
-    new ResourceRecord({
-      name: 'instagram.c10r.instagram.com',
-      type: QTYPE.AAAA,
-      cls: CLASS.IN,
-      ttl: 47,
-      rdlength: 16,
-      rdata: '2a03:2880:f242:cb:face:b00c:0:43fe',
+      qtype: QTYPE.A,
     }),
   ])
   .build();
 
-const encoder = new DNSEncoder(dnsMessage);
+const encoder = new DNSEncoder(message);
 const buffer = encoder.encode();
-console.log(buffer.toString('hex'));
+
+const client = dgram.createSocket('udp4');
+
+client.on('listening', () => {
+  const address = client.address();
+  console.log(`listening on ${address.address}:${address.port}`);
+});
+
+client.on('message', (message, rinfo) => {
+  const hex = message.toString('hex');
+  console.log(`response: ${hex}`);
+  process.exit(0);
+});
+
+client.send(buffer, 53, '8.8.8.8', (err, bytes) => {
+  if (err) throw err;
+
+  console.log(
+    `query packet: ${buffer.toString('hex')} packet length: ${bytes}`
+  );
+});
+
+// 0001818000010002000000000377777709696e7374616772616d03636f6d0000010001c00c0005000100000dea00170f7a2d7034322d696e7374616772616d0463313072c010c02f000100010000003400049df00dae
+// 0001818000010002000000000377777709696e7374616772616d03636f6d0000010001c00c0005000100000dea00170f7a2d7034322d696e7374616772616d0463313072c010c02f000100010000003400049df00dae
