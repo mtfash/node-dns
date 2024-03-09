@@ -24,7 +24,13 @@ export class DNSDecoder {
     [QTYPE.CNAME]: (data: Buffer, that: DNSDecoder) => {
       return that.decodeDomain();
     },
-    [QTYPE.A]: (data: Buffer, that: DNSDecoder) => {},
+    [QTYPE.A]: (data: Buffer, that: DNSDecoder) => {
+      const fields: number[] = [];
+      for (let i = 0; i < 4; i++) {
+        fields.push(data.readUint8(i));
+      }
+      return fields.join('.');
+    },
   };
 
   constructor(private message: Buffer) {}
