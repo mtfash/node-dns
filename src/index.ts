@@ -61,8 +61,11 @@ async function main() {
   console.log(responseBuffer.toString('hex'));
   const decoder = new DNSDecoder(responseBuffer);
 
-  const responseMessage = decoder.decode();
-  console.log(responseMessage);
+  try {
+    const responseMessage = decoder.decode();
+    console.log(responseMessage);
+  } catch (err: any) {
+    console.log(err.message);
+  }
 }
-
 main();

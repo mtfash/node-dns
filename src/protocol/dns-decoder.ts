@@ -1,9 +1,13 @@
+import { CLASS } from '../values/class';
 import { QCLASS } from '../values/qclass';
 import { QTYPE } from '../values/qtype';
 import { DNSMessage } from './dns-message';
 import { DNSMessageBuilder } from './dns-message-builder';
 import * as header from './header';
 import { QuestionEntry } from './question';
+import { ResourceRecord } from './resource-record';
+
+type RDataDecoder = (data: Buffer, decoder: DNSDecoder) => any;
 
 export class DNSDecoder {
   private names: { name: string; offset: number }[] = [];
@@ -15,6 +19,15 @@ export class DNSDecoder {
   private ancount = 0;
   private nscount = 0;
   private arcount = 0;
+
+  private static RDataDecoders: {
+    [key: number]: RDataDecoder;
+  } = {
+    [QTYPE.CNAME]: (data: Buffer, that: DNSDecoder) => {
+      return that.decodeDomain();
+    },
+    [QTYPE.A]: (data: Buffer, that: DNSDecoder) => {},
+  };
 
   constructor(private message: Buffer) {}
 
@@ -84,16 +97,32 @@ export class DNSDecoder {
 
     const offsets: number[] = [];
 
+    const startOffset = this.offset;
+
     while (length && length !== 0) {
       this.offset += 1;
 
       if ((length & 0xc0) === 0xc0) {
         const pointer = this.message.readUInt16BE(this.offset - 1) & 0x3fff;
-        const affix = this.names.find(({ offset }) => offset === pointer);
-        if (!affix) {
+        const domain = this.names.find(({ offset }) => offset === pointer);
+
+        if (!domain) {
           throw new Error(`Invalid pointer ${pointer}`);
         }
-        return `${labels.join('.')}.${affix.name}`;
+
+        this.offset += 1;
+
+        if (labels.length === 0) {
+          return domain.name;
+        }
+
+        labels.push(domain.name);
+
+        const name = labels.join('.');
+
+        this.names.push({ offset: startOffset, name: name });
+
+        return name;
       } else {
         labels.push(
           this.message
@@ -101,13 +130,15 @@ export class DNSDecoder {
             .toString('ascii')
         );
 
-        offsets.push(this.offset);
+        offsets.push(this.offset - 1);
 
         this.offset += length;
 
         length = this.message.readUint8(this.offset);
       }
     }
+
+    this.offset += 1;
 
     offsets.forEach((offset, index) => {
       this.names.push({ offset, name: labels.slice(index).join('.') });
@@ -140,9 +171,53 @@ export class DNSDecoder {
     this.builder.withQuestions(questions);
   }
 
+  decodeAnswers() {
+    const answers: ResourceRecord[] = [];
+
+    for (let i = 0; i < this.ancount; i++) {
+      const name = this.decodeDomain();
+
+      const type: QTYPE = this.message.readUInt16BE(this.offset);
+      this.offset += 2;
+
+      const cls: CLASS = this.message.readUInt16BE(this.offset);
+      this.offset += 2;
+
+      const ttl: number = this.message.readUInt32BE(this.offset);
+      this.offset += 4;
+
+      const rdlength: number = this.message.readUInt16BE(this.offset);
+      this.offset += 2;
+
+      const data: Buffer = this.message.subarray(
+        this.offset,
+        this.offset + rdlength
+      );
+
+      const rdataDecoder = DNSDecoder.RDataDecoders[type];
+      if (!rdataDecoder) {
+        throw new Error(`Resource record of type ${type} is not supported`);
+      }
+
+      answers.push(
+        new ResourceRecord({
+          name,
+          type,
+          cls,
+          ttl,
+          rdlength,
+          rdata: rdataDecoder(data, this),
+        })
+      );
+    }
+
+    this.builder.withAnswers(answers);
+  }
+
   decode(): DNSMessage {
     this.decodeHeader();
     this.decodeQuestions();
+    this.decodeAnswers();
 
     return this.builder.build();
   }
