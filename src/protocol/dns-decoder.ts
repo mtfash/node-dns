@@ -10,8 +10,6 @@ import { ResourceRecord } from './resource-record';
 type RDataDecoder = (data: Buffer, decoder: DNSDecoder) => any;
 
 export class DNSDecoder {
-  private names: { name: string; offset: number }[] = [];
-
   private builder: DNSMessageBuilder = new DNSMessageBuilder();
 
   private offset = 0;
@@ -42,6 +40,7 @@ export class DNSDecoder {
     } else if ((num32Bits ^ header.OPCODE_MASK) === header.OPCODE_MASK) {
       opcode = header.Opcode.QUERY;
     }
+
     let rc = header.ResponseCode.NoError;
     if ((num32Bits ^ header.RCODE_MASK) === header.RCODE_MASK) {
       rc = header.ResponseCode.NoError;
@@ -91,46 +90,52 @@ export class DNSDecoder {
     this.offset = 12;
   }
 
+  decodePointer(offset: number): string {
+    let labels: string[] = [];
+    let length = this.message.readUInt8(offset);
+
+    while (length !== 0) {
+      offset += 1;
+
+      if ((length & 0xc0) === 0xc0) {
+        const pointer = this.message.readUInt16BE(offset - 1) & 0x3fff;
+        return this.decodePointer(pointer);
+      }
+
+      labels.push(
+        this.message.subarray(offset, offset + length).toString('ascii')
+      );
+
+      offset += length;
+
+      length = this.message.readUint8(offset);
+    }
+
+    return labels.join('.');
+  }
+
   decodeDomain(): string {
     let labels: string[] = [];
     let length = this.message.readUInt8(this.offset);
 
-    const offsets: number[] = [];
-
-    const startOffset = this.offset;
-
-    while (length && length !== 0) {
+    while (length) {
       this.offset += 1;
 
       if ((length & 0xc0) === 0xc0) {
         const pointer = this.message.readUInt16BE(this.offset - 1) & 0x3fff;
-        const domain = this.names.find(({ offset }) => offset === pointer);
-
-        if (!domain) {
-          throw new Error(`Invalid pointer ${pointer}`);
-        }
 
         this.offset += 1;
 
-        if (labels.length === 0) {
-          return domain.name;
-        }
+        const pointerLabel = this.decodePointer(pointer);
+        labels.push(pointerLabel);
 
-        labels.push(domain.name);
-
-        const name = labels.join('.');
-
-        this.names.push({ offset: startOffset, name: name });
-
-        return name;
+        return labels.join('.');
       } else {
         labels.push(
           this.message
             .subarray(this.offset, this.offset + length)
             .toString('ascii')
         );
-
-        offsets.push(this.offset - 1);
 
         this.offset += length;
 
@@ -139,10 +144,6 @@ export class DNSDecoder {
     }
 
     this.offset += 1;
-
-    offsets.forEach((offset, index) => {
-      this.names.push({ offset, name: labels.slice(index).join('.') });
-    });
 
     return labels.join('.');
   }
