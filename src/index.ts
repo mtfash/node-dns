@@ -11,26 +11,28 @@ async function lookup(query: Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const client = dgram.createSocket('udp4');
 
-    client.on('listening', () => {
-      const address = client.address();
-      console.log(`listening on ${address.address}:${address.port}`);
-    });
+    client.on('error', reject);
 
     client.on('message', (message) => {
       client.close();
       return resolve(message);
     });
 
-    client.on('error', reject);
+    client.on('listening', () => {
+      const address = client.address();
 
-    client.send(query, 53, '8.8.8.8', (err, bytes) => {
-      if (err) {
-        return reject(err);
-      }
-      console.log(
-        `query packet: ${query.toString('hex')} packet length: ${bytes}`
-      );
+      console.log(`Listening on ${address.address}:${address.port}`);
+
+      client.send(query, 53, '8.8.8.8', (err, bytes) => {
+        if (err) {
+          return reject(err);
+        }
+
+        console.log(`Sent ${bytes} bytes to 8.8.8.8:53`);
+      });
     });
+
+    client.bind();
   });
 }
 
@@ -58,14 +60,10 @@ async function main() {
   const buffer = encoder.encode();
   const responseBuffer = await lookup(buffer);
 
-  console.log(responseBuffer.toString('hex'));
   const decoder = new DNSDecoder(responseBuffer);
 
-  try {
-    const responseMessage = decoder.decode();
-    console.log(responseMessage);
-  } catch (err: any) {
-    console.log(err.message);
-  }
+  const responseMessage = decoder.decode();
+  console.log('Response:', responseMessage);
 }
+
 main();

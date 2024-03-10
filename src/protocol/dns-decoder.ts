@@ -214,7 +214,7 @@ export class DNSDecoder {
       }
 
       const rdata = rdataDecoder(data, this);
-      console.log('rdata:', rdata);
+
       answers.push(
         new ResourceRecord({
           name,
