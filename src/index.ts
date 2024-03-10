@@ -49,7 +49,7 @@ async function main() {
       new QuestionEntry({
         qname: 'www.instagram.com',
         qclass: QCLASS.IN,
-        qtype: QTYPE.A,
+        qtype: QTYPE.AAAA,
       }),
     ])
     .build();

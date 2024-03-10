@@ -31,6 +31,13 @@ export class DNSDecoder {
       }
       return fields.join('.');
     },
+    [QTYPE.AAAA]: (data: Buffer, that: DNSDecoder) => {
+      const fields: number[] = [];
+      for (let i = 0; i < 8; i++) {
+        fields.push(data.readUInt16BE(i * 2));
+      }
+      return fields.map((field) => field.toString(16)).join(':');
+    },
   };
 
   constructor(private message: Buffer) {}
@@ -206,6 +213,8 @@ export class DNSDecoder {
         throw new Error(`Resource record of type ${type} is not supported`);
       }
 
+      const rdata = rdataDecoder(data, this);
+      console.log('rdata:', rdata);
       answers.push(
         new ResourceRecord({
           name,
@@ -213,7 +222,7 @@ export class DNSDecoder {
           cls,
           ttl,
           rdlength,
-          rdata: rdataDecoder(data, this),
+          rdata,
         })
       );
     }
