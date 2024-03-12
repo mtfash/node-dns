@@ -1,6 +1,5 @@
 import { QCLASS } from '../values/qclass';
 import { QTYPE } from '../values/qtype';
-import { decodeDomainFrom, encodeDomain } from './domain';
 
 type Question = {
   qname: string;

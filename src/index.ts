@@ -44,7 +44,6 @@ async function main() {
         id: 0x01,
         isQuery: true,
         recursionDesired: true,
-        qdcount: 1,
       })
     )
     .withQuestions([
