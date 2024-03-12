@@ -19,7 +19,7 @@ export class DNSEncoder {
     },
     [QTYPE.A]: (ipv4: string, that: DNSEncoder): number => {
       ipv4.split('.').forEach((field) => {
-        that.offset = that.buffer.writeUint8(parseInt(field), that.offset);
+        that.offset = that.buffer.writeUInt8(parseInt(field), that.offset);
       });
 
       return that.offset;
@@ -55,7 +55,7 @@ export class DNSEncoder {
       throw new Error(`Invalid label length: ${label} (${length})`);
     }
 
-    this.offset = this.buffer.writeUint8(length, this.offset);
+    this.offset = this.buffer.writeUInt8(length, this.offset);
 
     this.buffer.set(Buffer.from(label, 'ascii'), this.offset);
 
@@ -119,7 +119,7 @@ export class DNSEncoder {
 
     const query = header.isQuery ? Query.QUERY : Query.RESPONSE;
 
-    this.buffer.writeUInt16BE(header.id, 0);
+    this.buffer.writeUInt16BE(header.id & 0xffff, 0);
     this.buffer.writeUInt16BE(
       query |
         header.opcode |
@@ -131,10 +131,10 @@ export class DNSEncoder {
       2
     );
 
-    this.buffer.writeUInt16BE(header.qdcount, 4);
-    this.buffer.writeUInt16BE(header.ancount, 6);
-    this.buffer.writeUInt16BE(header.nscount, 8);
-    this.offset = this.buffer.writeUInt16BE(header.arcount, 10);
+    this.buffer.writeUInt16BE(header.qdcount & 0xffff, 4);
+    this.buffer.writeUInt16BE(header.ancount & 0xffff, 6);
+    this.buffer.writeUInt16BE(header.nscount & 0xffff, 8);
+    this.offset = this.buffer.writeUInt16BE(header.arcount & 0xffff, 10);
   }
 
   private encodeQuestions() {
@@ -144,8 +144,15 @@ export class DNSEncoder {
       const question = questions[i]!;
       this.offset = this.encodeDomain(question.qname);
 
-      this.offset = this.buffer.writeUint16BE(question.qtype, this.offset);
-      this.offset = this.buffer.writeUint16BE(question.qclass, this.offset);
+      this.offset = this.buffer.writeUInt16BE(
+        question.qtype & 0xffff,
+        this.offset
+      );
+
+      this.offset = this.buffer.writeUInt16BE(
+        question.qclass & 0xffff,
+        this.offset
+      );
     }
   }
 
@@ -161,10 +168,19 @@ export class DNSEncoder {
 
       this.encodeDomain(record.name);
 
-      this.offset = this.buffer.writeUint16BE(record.type, this.offset);
-      this.offset = this.buffer.writeUint16BE(record.cls, this.offset);
-      this.offset = this.buffer.writeUint32BE(record.ttl, this.offset);
-      this.offset = this.buffer.writeUint16BE(record.rdlength, this.offset);
+      this.offset = this.buffer.writeUInt16BE(
+        record.type & 0xffff,
+        this.offset
+      );
+      this.offset = this.buffer.writeUInt16BE(record.cls & 0xffff, this.offset);
+      this.offset = this.buffer.writeUInt32BE(
+        record.ttl & 0xffffffff,
+        this.offset
+      );
+      this.offset = this.buffer.writeUInt16BE(
+        record.rdlength & 0xffff,
+        this.offset
+      );
 
       const rdataEncoder = DNSEncoder.RDataEncoders[record.type];
 
